@@ -26,9 +26,8 @@ public class BestPractice {
     @Column(columnDefinition = "text")
     private String description;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private BestPracticeType type;
+    @Column(name = "types", nullable = false)
+    private String[] types = new String[]{};
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -1,4 +1,4 @@
-export type BPType = 'SKILL_SET' | 'MCP_CONFIG' | 'RULE_SET' | 'AGENT_WORKFLOW';
+export type BPType = 'MCP' | 'SKILL' | 'RULE' | 'WORKFLOW' | 'HOOKS' | 'PROMPT' | 'TOOL' | 'OTHER';
 export type BPStatus = 'DRAFT' | 'PENDING_REVIEW' | 'UNDER_REVIEW' | 'PUBLISHED' | 'REJECTED';
 export type UserRole = 'USER' | 'ADMIN';
 
@@ -27,7 +27,7 @@ export interface BestPracticeListItem {
   id: string;
   title: string;
   description: string;
-  type: BPType;
+  types: BPType[];
   status: BPStatus;
   tags: string[];
   author: {
@@ -53,7 +53,7 @@ export interface BestPractice extends BestPracticeListItem {
 export interface BestPracticeRequest {
   title: string;
   description: string;
-  type: BPType;
+  types: BPType[];
   usageGuide?: string;
   installGuide?: string;
   externalLinks: ExternalLink[];

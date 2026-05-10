@@ -1,5 +1,5 @@
 package com.axon.bestpractice;
 
 public enum BestPracticeType {
-    SKILL_SET, MCP_CONFIG, RULE_SET, AGENT_WORKFLOW
+    MCP, SKILL, RULE, WORKFLOW, HOOKS, PROMPT, TOOL, OTHER
 }

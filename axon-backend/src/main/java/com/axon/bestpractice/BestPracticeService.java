@@ -29,7 +29,7 @@ public class BestPracticeService {
         return repository.save(BestPractice.builder()
             .title(req.title())
             .description(req.description())
-            .type(req.type())
+            .types(req.types().stream().map(Enum::name).toArray(String[]::new))
             .status(BestPracticeStatus.DRAFT)
             .author(author)
             .usageGuide(req.usageGuide())
@@ -55,6 +55,7 @@ public class BestPracticeService {
         
         bp.setTitle(req.title());
         bp.setDescription(req.description());
+        bp.setTypes(req.types().stream().map(Enum::name).toArray(String[]::new));
         bp.setUsageGuide(req.usageGuide());
         bp.setInstallGuide(req.installGuide());
         bp.setExternalLinks(toJson(req.externalLinks()));
@@ -103,7 +104,8 @@ public class BestPracticeService {
             : Sort.by(Sort.Direction.DESC, "publishedAt");
         
         Pageable pageable = PageRequest.of(page, size, s);
-        return repository.findPublished(type, search, pageable).map(BestPracticeListItem::from);
+        String typeStr = type != null ? type.name() : null;
+        return repository.findPublished(typeStr, search, pageable).map(BestPracticeListItem::from);
     }
 
     @Transactional

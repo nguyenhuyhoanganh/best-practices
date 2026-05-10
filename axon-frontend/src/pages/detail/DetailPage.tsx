@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { bpApi } from '../../api/auth';
-import { TypeBadge } from '../../components/ui/TypeBadge';
+import { TypeBadgeList } from '../../components/ui/TypeBadge';
 import { RankingBadge } from '../../components/ui/RankingBadge';
 import { FileList } from '../../components/detail/FileList';
 import type { BestPractice } from '../../types';
@@ -30,7 +30,7 @@ export function DetailPage() {
           <section className="space-y-6">
             <div className="flex justify-between items-start gap-4">
               <div className="space-y-4">
-                <TypeBadge type={bp.type} />
+                <TypeBadgeList types={bp.types} />
                 <h1 className="text-3xl md:text-4xl font-black text-gray-900 leading-tight">
                   {bp.title}
                 </h1>

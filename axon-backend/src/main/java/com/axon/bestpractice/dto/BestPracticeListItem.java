@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public record BestPracticeListItem(
     UUID id, String title, String description,
-    BestPracticeType type, BestPracticeStatus status,
+    List<String> types, BestPracticeStatus status,
     List<String> tags, AuthorDto author,
     double usageScore, int viewCount, int downloadCount,
     Instant publishedAt
@@ -19,7 +19,8 @@ public record BestPracticeListItem(
             ? bp.getDescription().substring(0, 200) + "..." : bp.getDescription();
         return new BestPracticeListItem(
             bp.getId(), bp.getTitle(), desc,
-            bp.getType(), bp.getStatus(),
+            bp.getTypes() != null ? List.of(bp.getTypes()) : List.of(),
+            bp.getStatus(),
             bp.getTags() != null ? List.of(bp.getTags()) : List.of(),
             AuthorDto.from(bp.getAuthor()),
             bp.getUsageScore(), bp.getViewCount(), bp.getDownloadCount(),

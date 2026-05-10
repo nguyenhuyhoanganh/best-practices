@@ -11,14 +11,14 @@ import java.util.UUID;
 
 public interface BestPracticeRepository extends JpaRepository<BestPractice, UUID> {
 
-    @Query("""
-        SELECT bp FROM BestPractice bp
+    @Query(value = """
+        SELECT * FROM best_practices bp
         WHERE bp.status = 'PUBLISHED'
-          AND (:type IS NULL OR bp.type = :type)
+          AND (:type IS NULL OR :type = ANY(bp.types))
           AND (:search IS NULL OR lower(bp.title) LIKE lower(concat('%', :search, '%'))
                OR lower(bp.description) LIKE lower(concat('%', :search, '%')))
-        """)
-    Page<BestPractice> findPublished(BestPracticeType type, String search, Pageable pageable);
+        """, nativeQuery = true)
+    Page<BestPractice> findPublished(String type, String search, Pageable pageable);
 
     List<BestPractice> findByAuthorIdOrderByCreatedAtDesc(UUID authorId);
 

@@ -10,7 +10,7 @@ export function SubmitPage() {
   const [formData, setFormData] = useState<BestPracticeRequest>({
     title: '',
     description: '',
-    type: 'SKILL_SET',
+    types: [],
     usageGuide: '',
     installGuide: '',
     externalLinks: [],
@@ -36,6 +36,13 @@ export function SubmitPage() {
 
   const handleNext = () => setStep(s => s + 1);
   const handleBack = () => setStep(s => s - 1);
+
+  const toggleType = (t: BPType) => {
+    const newTypes = formData.types.includes(t)
+      ? formData.types.filter(x => x !== t)
+      : [...formData.types, t];
+    setFormData({ ...formData, types: newTypes });
+  };
 
   const addLink = () => {
     setFormData({
@@ -89,17 +96,17 @@ export function SubmitPage() {
               />
             </div>
             <div className="space-y-4">
-              <label className="block text-sm font-bold text-gray-700">Type *</label>
-              <div className="grid grid-cols-2 gap-3">
-                {(['SKILL_SET', 'MCP_CONFIG', 'RULE_SET', 'AGENT_WORKFLOW'] as BPType[]).map(t => (
+              <label className="block text-sm font-bold text-gray-700">Types * (Select multiple)</label>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {(['MCP', 'SKILL', 'RULE', 'WORKFLOW', 'HOOKS', 'PROMPT', 'TOOL', 'OTHER'] as BPType[]).map(t => (
                   <button
                     key={t}
-                    onClick={() => setFormData({ ...formData, type: t })}
-                    className={`px-4 py-3 rounded-xl border text-sm font-bold transition-all ${
-                      formData.type === t ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                    onClick={() => toggleType(t)}
+                    className={`px-3 py-2 rounded-xl border text-xs font-bold transition-all ${
+                      formData.types.includes(t) ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-400 hover:border-gray-300'
                     }`}
                   >
-                    {t.replace('_', ' ')}
+                    {t}
                   </button>
                 ))}
               </div>
@@ -183,14 +190,27 @@ export function SubmitPage() {
               />
             </div>
             <div className="space-y-4">
-              <label className="block text-sm font-bold text-gray-700">Tags</label>
+              <div className="flex justify-between items-center">
+                <label className="block text-sm font-bold text-gray-700">Tags (Role/Domain)</label>
+                <div className="flex gap-2">
+                  {['backend', 'frontend', 'devops', 'ba', 'pm'].map(role => (
+                    <button 
+                      key={role}
+                      onClick={() => !formData.tags.includes(role) && setFormData({ ...formData, tags: [...formData.tags, role] })}
+                      className="text-[10px] font-black uppercase text-gray-400 hover:text-blue-600"
+                    >
+                      +{role}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="flex gap-2">
                 <input 
                   value={tagInput}
                   onChange={e => setTagInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && addTag()}
-                  className="flex-1 border border-gray-200 rounded-xl px-4 py-2 text-sm outline-none"
-                  placeholder="e.g. python, claude, security"
+                  className="flex-1 border border-gray-200 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Type and press Enter (e.g. backend, security)"
                 />
                 <button onClick={addTag} className="bg-gray-100 px-4 rounded-xl font-bold text-sm">Add</button>
               </div>

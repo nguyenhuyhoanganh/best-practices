@@ -9,7 +9,7 @@ import java.util.List;
 public record BestPracticeRequest(
     @NotBlank @Size(max = 200) String title,
     String description,
-    @NotNull BestPracticeType type,
+    @NotNull List<BestPracticeType> types,
     String usageGuide,
     String installGuide,
     List<ExternalLinkDto> externalLinks,

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { BestPracticeListItem } from '../types';
-import { TypeBadge } from './TypeBadge';
+import { TypeBadgeList } from './TypeBadge';
 import { RankingBadge } from './RankingBadge';
 
 export function BestPracticeCard({ bp }: { bp: BestPracticeListItem }) {
@@ -10,7 +10,7 @@ export function BestPracticeCard({ bp }: { bp: BestPracticeListItem }) {
       className="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-xl hover:border-blue-200 transition-all duration-300 flex flex-col h-full"
     >
       <div className="flex justify-between items-start mb-4">
-        <TypeBadge type={bp.type} />
+        <TypeBadgeList types={bp.types} />
         <RankingBadge score={bp.usageScore} />
       </div>
 
