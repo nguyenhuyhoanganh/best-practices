@@ -1,0 +1,7 @@
+# src/main/resources/application-dev.yml
+spring:
+  jpa:
+    show-sql: true
+logging:
+  level:
+    com.axon: DEBUG
