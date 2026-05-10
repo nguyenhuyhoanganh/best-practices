@@ -32,6 +32,7 @@ export const bpApi = {
 
 export const adminApi = {
   queue: () => api.get('/admin/best-practices/queue'),
+  stats: () => api.get('/admin/best-practices/stats'),
   take: (id: string) => api.put(`/admin/best-practices/${id}/take`),
   approve: (id: string) => api.put(`/admin/best-practices/${id}/approve`),
   reject: (id: string, comment: string) => api.put(`/admin/best-practices/${id}/reject`, { comment }),

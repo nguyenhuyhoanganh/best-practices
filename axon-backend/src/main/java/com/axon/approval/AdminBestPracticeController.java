@@ -22,6 +22,11 @@ public class AdminBestPracticeController {
             .map(BestPracticeListItem::from).toList());
     }
 
+    @GetMapping("/stats")
+    public ResponseEntity<com.axon.approval.dto.AdminStatsResponse> stats() {
+        return ResponseEntity.ok(approvalService.getStats());
+    }
+
     @PutMapping("/{id}/take")
     public ResponseEntity<BestPracticeListItem> take(
         @PathVariable UUID id, @AuthenticationPrincipal User admin) {

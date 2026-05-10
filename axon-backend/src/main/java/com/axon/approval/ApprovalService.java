@@ -8,15 +8,60 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import com.axon.approval.dto.AdminStatsResponse;
+import com.axon.user.UserRepository;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+...
 
 @Service
 @RequiredArgsConstructor
 public class ApprovalService {
     private final BestPracticeRepository bpRepo;
     private final ApprovalRepository approvalRepo;
+    private final UserRepository userRepo;
     private final NotificationService notificationService;
 
-    public List<BestPractice> getQueue() {
+    public AdminStatsResponse getStats() {
+        var allBps = bpRepo.findAll();
+
+        Map<String, Long> byType = new HashMap<>();
+        Map<String, Long> byRole = new HashMap<>();
+
+        long totalViews = 0;
+        long totalDownloads = 0;
+
+        for (var bp : allBps) {
+            totalViews += bp.getViewCount();
+            totalDownloads += bp.getDownloadCount();
+
+            for (String t : bp.getTypes()) {
+                byType.put(t, byType.getOrDefault(t, 0L) + 1);
+            }
+            for (String tag : bp.getTags()) {
+                // Heuristic: check if tag is one of our roles
+                if (Arrays.asList("backend", "frontend", "devops", "ba", "pm", "mobile").contains(tag.toLowerCase())) {
+                    byRole.put(tag.toLowerCase(), byRole.getOrDefault(tag.toLowerCase(), 0L) + 1);
+                }
+            }
+        }
+
+        return new AdminStatsResponse(
+            userRepo.count(),
+            allBps.size(),
+            allBps.stream().filter(x -> x.getStatus() == BestPracticeStatus.PENDING_REVIEW).count(),
+            allBps.stream().filter(x -> x.getStatus() == BestPracticeStatus.PUBLISHED).count(),
+            byType,
+            byRole,
+            totalViews,
+            totalDownloads
+        );
+    }
+...
+
         return bpRepo.findByStatusIn(List.of(
             BestPracticeStatus.PENDING_REVIEW, BestPracticeStatus.UNDER_REVIEW));
     }
