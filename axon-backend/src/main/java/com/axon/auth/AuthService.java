@@ -1,4 +1,5 @@
 package com.axon.auth;
+
 import com.axon.auth.dto.LoginRequest;
 import com.axon.auth.dto.TokenResponse;
 import com.axon.auth.dto.UserInfoResponse;
@@ -8,6 +9,7 @@ import com.axon.user.User;
 import com.axon.user.UserRepository;
 import com.axon.user.UserRole;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
     private final SSOProvider ssoProvider;
     private final UserRepository userRepository;
@@ -26,10 +29,16 @@ public class AuthService {
 
     @Transactional
     public TokenResponse login(LoginRequest req) {
+        log.info("Login attempt for user: {}", req.username());
         User user = userRepository.findByEmail(req.username())
-            .orElseThrow(() -> new IllegalArgumentException("Invalid username or password"));
+            .orElseThrow(() -> {
+                log.warn("User not found in DB: '{}'", req.username());
+                return new IllegalArgumentException("Invalid username or password");
+            });
 
-        if (!passwordEncoder.matches(req.password(), user.getPassword())) {
+        if (user.getPassword() == null || !passwordEncoder.matches(req.password(), user.getPassword())) {
+            log.warn("Password mismatch for user: '{}'. Stored hash starts with: {}", 
+                req.username(), user.getPassword() != null ? user.getPassword().substring(0, 10) : "null");
             throw new IllegalArgumentException("Invalid username or password");
         }
 
@@ -43,8 +52,6 @@ public class AuthService {
 
     @Transactional
     public TokenResponse ssoLogin(String code) {
-...
-
         var info = ssoProvider.exchangeCode(code);
         var user = userRepository
             .findBySsoProviderAndSsoSubject(info.provider(), info.subject())

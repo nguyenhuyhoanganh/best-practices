@@ -77,7 +77,7 @@ export function LoginPage() {
         <div className="pt-4 border-t border-gray-50 text-center">
           <p className="text-xs text-gray-400 font-medium italic">
             Default credentials for this environment: <br/>
-            <span className="font-bold text-gray-500 not-italic">admin / 12345678</span>
+            <span className="font-bold text-gray-500 not-italic">admin@axon.com / 12345678</span>
           </p>
         </div>
       </div>
