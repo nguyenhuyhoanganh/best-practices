@@ -27,6 +27,8 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+import org.springframework.http.HttpMethod;
+...
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
@@ -37,8 +39,7 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsSource()))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**", "/actuator/health").permitAll()
-                .requestMatchers("/api/v1/best-practices", "/api/v1/best-practices/trending",
-                    "/api/v1/best-practices/{id}", "/api/v1/best-practices/{id}/files/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/best-practices/**").permitAll()
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
