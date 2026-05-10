@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from './components/layout/Layout';
 import { SSOCallback } from './pages/auth/SSOCallback';
+import { LoginPage } from './pages/auth/LoginPage';
 import { BrowsePage } from './pages/browse/BrowsePage';
 import { DetailPage } from './pages/detail/DetailPage';
 import { SubmitPage } from './pages/submit/SubmitPage';
@@ -14,7 +15,7 @@ const queryClient = new QueryClient();
 function ProtectedRoute({ children, adminOnly = false }: { children: React.ReactNode; adminOnly?: boolean }) {
   const { isAuthenticated, user } = useAuthStore();
   
-  if (!isAuthenticated) return <Navigate to="/" replace />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (adminOnly && user?.role !== 'ADMIN') return <Navigate to="/" replace />;
   
   return <>{children}</>;
@@ -26,6 +27,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/auth/callback" element={<SSOCallback />} />
+          <Route path="/login" element={<LoginPage />} />
           
           <Route element={<Layout />}>
             <Route path="/" element={<BrowsePage />} />

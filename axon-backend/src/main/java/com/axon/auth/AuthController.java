@@ -16,19 +16,26 @@ import java.net.URI;
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
-    private final SSOProvider ssoProvider;
+    import com.axon.auth.dto.LoginRequest;
+    import com.axon.auth.dto.TokenResponse;
+    ...
+        @GetMapping("/sso/login")
+        public ResponseEntity<Void> login() {
+            return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create(ssoProvider.getLoginUrl()))
+                .build();
+        }
 
-    @GetMapping("/sso/login")
-    public ResponseEntity<Void> login() {
-        return ResponseEntity.status(HttpStatus.FOUND)
-            .location(URI.create(ssoProvider.getLoginUrl()))
-            .build();
-    }
+        @PostMapping("/login")
+        public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest req) {
+            return ResponseEntity.ok(authService.login(req));
+        }
 
-    @GetMapping("/sso/callback")
-    public ResponseEntity<TokenResponse> callback(@RequestParam String code) {
-        return ResponseEntity.ok(authService.login(code));
-    }
+        @GetMapping("/sso/callback")
+        public ResponseEntity<TokenResponse> callback(@RequestParam String code) {
+            return ResponseEntity.ok(authService.ssoLogin(code));
+        }
+    ...
 
     @GetMapping("/me")
     public ResponseEntity<UserInfoResponse> me(@AuthenticationPrincipal User user) {

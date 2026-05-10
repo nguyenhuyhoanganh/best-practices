@@ -3,6 +3,7 @@ import { api } from './client';
 import type { BestPracticeRequest, BPType } from '../types';
 
 export const authApi = {
+  login: (data: any) => api.post('/auth/login', data),
   callback: (code: string) => axios.get(`/auth/sso/callback?code=${code}`),
   me: () => axios.get('/auth/me'),
   logout: () => axios.post('/auth/logout'),

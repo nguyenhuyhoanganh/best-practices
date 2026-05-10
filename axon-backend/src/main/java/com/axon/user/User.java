@@ -31,6 +31,8 @@ public class User {
     private String ssoSubject;
     private String avatarUrl;
 
+    private String password;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 }

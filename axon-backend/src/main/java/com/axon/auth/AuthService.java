@@ -1,5 +1,5 @@
 package com.axon.auth;
-
+import com.axon.auth.dto.LoginRequest;
 import com.axon.auth.dto.TokenResponse;
 import com.axon.auth.dto.UserInfoResponse;
 import com.axon.auth.jwt.JwtService;
@@ -9,6 +9,7 @@ import com.axon.user.UserRepository;
 import com.axon.user.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,12 +19,32 @@ public class AuthService {
     private final SSOProvider ssoProvider;
     private final UserRepository userRepository;
     private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${jwt.access-token-ttl}")
     private long accessTokenTtl;
 
     @Transactional
-    public TokenResponse login(String code) {
+    public TokenResponse login(LoginRequest req) {
+        User user = userRepository.findByEmail(req.username())
+            .orElseThrow(() -> new IllegalArgumentException("Invalid username or password"));
+
+        if (!passwordEncoder.matches(req.password(), user.getPassword())) {
+            throw new IllegalArgumentException("Invalid username or password");
+        }
+
+        return new TokenResponse(
+            jwtService.generateAccessToken(user),
+            jwtService.generateRefreshToken(user),
+            accessTokenTtl,
+            UserInfoResponse.from(user)
+        );
+    }
+
+    @Transactional
+    public TokenResponse ssoLogin(String code) {
+...
+
         var info = ssoProvider.exchangeCode(code);
         var user = userRepository
             .findBySsoProviderAndSsoSubject(info.provider(), info.subject())

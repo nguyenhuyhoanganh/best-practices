@@ -13,12 +13,21 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+...
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -30,6 +39,8 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsSource()))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**", "/actuator/health").permitAll()
+...
+
                 .requestMatchers("/api/v1/best-practices", "/api/v1/best-practices/trending",
                     "/api/v1/best-practices/{id}", "/api/v1/best-practices/{id}/files/**").permitAll()
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
