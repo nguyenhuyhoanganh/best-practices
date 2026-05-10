@@ -31,14 +31,10 @@ public class AuthService {
     public TokenResponse login(LoginRequest req) {
         log.info("Login attempt for user: {}", req.username());
         User user = userRepository.findByEmail(req.username())
-            .orElseThrow(() -> {
-                log.warn("User not found in DB: '{}'", req.username());
-                return new IllegalArgumentException("Invalid username or password");
-            });
+            .orElseThrow(() -> new IllegalArgumentException("Invalid username or password"));
 
         if (user.getPassword() == null || !passwordEncoder.matches(req.password(), user.getPassword())) {
-            log.warn("Password mismatch for user: '{}'. Stored hash starts with: {}", 
-                req.username(), user.getPassword() != null ? user.getPassword().substring(0, 10) : "null");
+            log.warn("Password mismatch for user: {}", req.username());
             throw new IllegalArgumentException("Invalid username or password");
         }
 

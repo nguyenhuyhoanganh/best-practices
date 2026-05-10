@@ -13,9 +13,6 @@ import com.axon.user.UserRepository;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
-
-...
 
 @Service
 @RequiredArgsConstructor
@@ -42,7 +39,6 @@ public class ApprovalService {
                 byType.put(t, byType.getOrDefault(t, 0L) + 1);
             }
             for (String tag : bp.getTags()) {
-                // Heuristic: check if tag is one of our roles
                 if (Arrays.asList("backend", "frontend", "devops", "ba", "pm", "mobile").contains(tag.toLowerCase())) {
                     byRole.put(tag.toLowerCase(), byRole.getOrDefault(tag.toLowerCase(), 0L) + 1);
                 }
@@ -60,8 +56,8 @@ public class ApprovalService {
             totalDownloads
         );
     }
-...
 
+    public List<BestPractice> getQueue() {
         return bpRepo.findByStatusIn(List.of(
             BestPracticeStatus.PENDING_REVIEW, BestPracticeStatus.UNDER_REVIEW));
     }

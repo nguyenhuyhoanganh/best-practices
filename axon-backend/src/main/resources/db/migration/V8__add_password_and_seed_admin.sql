@@ -1,5 +1,5 @@
 -- V8: Add password column and seed default admin
-ALTER TABLE users ADD COLUMN password VARCHAR(255);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR(255);
 
 -- Seed admin/12345678 (BCrypt hash of 12345678)
 INSERT INTO users (id, email, name, role, password, created_at)

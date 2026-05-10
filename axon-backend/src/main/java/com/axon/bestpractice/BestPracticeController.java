@@ -26,7 +26,7 @@ public class BestPracticeController {
         if (cached != null) {
             return ResponseEntity.ok(cached);
         }
-        return ResponseEntity.ok(service.listPublished(null, null, "trending", 0, 10).getContent());
+        return ResponseEntity.ok(service.listPublished(null, null, null, "trending", 0, 10).getContent());
     }
 
     @GetMapping
