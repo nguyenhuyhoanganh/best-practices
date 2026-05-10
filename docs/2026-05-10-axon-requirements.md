@@ -1,8 +1,8 @@
 # AXon — Requirements Document
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Date:** 2026-05-10  
-**Status:** Draft
+**Status:** Approved
 
 ---
 
@@ -42,13 +42,13 @@ AXon là nền tảng web nội bộ cho phép nhân viên công ty đăng ký, 
 | ID | Yêu cầu | Độ ưu tiên |
 |----|---------|-----------|
 | FR-BP-01 | Người dùng tạo best practice với trạng thái DRAFT | Must |
-| FR-BP-02 | Best practice có các loại: SKILL_SET, MCP_CONFIG, RULE_SET, AGENT_WORKFLOW | Must |
-| FR-BP-03 | Thông tin best practice gồm: tiêu đề, mô tả, loại, hướng dẫn sử dụng, hướng dẫn cài đặt, tags, liên kết ngoài | Must |
+| FR-BP-02 | Best practice hỗ trợ kết hợp nhiều loại (Multi-types): MCP, SKILL, RULE, WORKFLOW, HOOKS, PROMPT, TOOL | Must |
+| FR-BP-03 | Thông tin best practice gồm: tiêu đề, mô tả, danh sách loại, hướng dẫn sử dụng, hướng dẫn cài đặt, tags (role-based), liên kết ngoài | Must |
 | FR-BP-04 | Người dùng upload nhiều file đính kèm cho một best practice | Must |
 | FR-BP-05 | Người dùng submit best practice để chờ duyệt (DRAFT → PENDING_REVIEW) | Must |
 | FR-BP-06 | Người dùng chỉnh sửa best practice của mình khi đang ở trạng thái DRAFT hoặc REJECTED | Must |
 | FR-BP-07 | Người dùng xoá best practice của mình khi đang ở trạng thái DRAFT | Must |
-| FR-BP-08 | Best practice loại AGENT_WORKFLOW có trường liên kết đến workflow ID trong Agent Builder | Must |
+| FR-BP-08 | Best practice loại WORKFLOW có trường liên kết đến workflow ID trong Agent Builder | Must |
 | FR-BP-09 | Người dùng xem danh sách best practice của mình kèm trạng thái hiện tại | Must |
 
 ### FR-BROWSE: Tìm kiếm & Khám phá
@@ -56,13 +56,13 @@ AXon là nền tảng web nội bộ cho phép nhân viên công ty đăng ký, 
 | ID | Yêu cầu | Độ ưu tiên |
 |----|---------|-----------|
 | FR-BROWSE-01 | Chỉ best practice có trạng thái PUBLISHED mới hiển thị trên trang browse | Must |
-| FR-BROWSE-02 | Người dùng lọc best practice theo loại (SKILL_SET, MCP_CONFIG, RULE_SET, AGENT_WORKFLOW) | Must |
+| FR-BROWSE-02 | Người dùng lọc best practice theo loại (hỗ trợ tìm kiếm trong mảng types) | Must |
 | FR-BROWSE-03 | Người dùng tìm kiếm theo từ khoá (tiêu đề, mô tả, tags) | Must |
 | FR-BROWSE-04 | Người dùng sắp xếp kết quả theo: mới nhất, phổ biến nhất (usage_score) | Must |
 | FR-BROWSE-05 | Trang chủ hiển thị section "Trending" — top 10 best practice theo usage_score | Must |
 | FR-BROWSE-06 | Người dùng xem chi tiết best practice: mô tả đầy đủ, files, links, usage guide, install guide | Must |
 | FR-BROWSE-07 | Người dùng download file đính kèm (yêu cầu đăng nhập) | Must |
-| FR-BROWSE-08 | Người dùng xem và truy cập workflow trong Agent Builder (với loại AGENT_WORKFLOW) | Must |
+| FR-BROWSE-08 | Người dùng xem và truy cập workflow trong Agent Builder (với loại WORKFLOW) | Must |
 
 ### FR-APPROVAL: Quy trình kiểm duyệt
 
@@ -90,7 +90,7 @@ AXon là nền tảng web nội bộ cho phép nhân viên công ty đăng ký, 
 | ID | Yêu cầu | Độ ưu tiên |
 |----|---------|-----------|
 | FR-INT-01 | Backend proxy các request đến Agent Builder API | Must |
-| FR-INT-02 | Detail page của AGENT_WORKFLOW BP hiển thị thông tin workflow từ Agent Builder | Must |
+| FR-INT-02 | Detail page của WORKFLOW BP hiển thị thông tin workflow từ Agent Builder | Must |
 | FR-INT-03 | Khi người dùng nhấn "Use Workflow", hệ thống log WORKFLOW_USED và redirect/embed Agent Builder | Must |
 
 ---
@@ -115,7 +115,7 @@ AXon là nền tảng web nội bộ cho phép nhân viên công ty đăng ký, 
 | NFR-PERF-01 | Browse API trả về trong < 500ms ở P95 |
 | NFR-PERF-02 | File upload tối đa 50MB mỗi file |
 | NFR-PERF-03 | Trending API dùng Redis cache — TTL 1 giờ |
-| NFR-PERF-04 | Database index trên: `best_practices.status`, `best_practices.type`, `best_practices.usage_score` |
+| NFR-PERF-04 | Database index trên: `best_practices.status`, `best_practices.types`, `best_practices.usage_score` |
 
 ### NFR-UX: Trải nghiệm người dùng
 
@@ -124,7 +124,7 @@ AXon là nền tảng web nội bộ cho phép nhân viên công ty đăng ký, 
 | NFR-UX-01 | Giao diện responsive — hỗ trợ desktop (1280px+) và tablet (768px+) |
 | NFR-UX-02 | Loading state hiển thị khi fetch data |
 | NFR-UX-03 | Error message rõ ràng khi thao tác thất bại |
-| NFR-UX-04 | Submit form có auto-save DRAFT để tránh mất dữ liệu |
+| NFR-UX-04 | Submit form có quy trình 4 bước và định hướng tags theo role |
 
 ### NFR-OPS: Vận hành
 
@@ -193,7 +193,7 @@ US-A-04: Là admin, tôi muốn quản lý danh sách user và phân quyền
 
 ### AC-01: Đăng ký Best Practice thành công
 - Given: User đã đăng nhập
-- When: User điền đầy đủ thông tin (title, type, description) và nhấn Submit
+- When: User điền đầy đủ thông tin (title, types, description) và nhấn Submit
 - Then: BP tạo với status DRAFT, user thấy trong "My Submissions"
 
 ### AC-02: Submit để review
