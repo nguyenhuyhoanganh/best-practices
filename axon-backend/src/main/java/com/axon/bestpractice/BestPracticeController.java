@@ -32,12 +32,13 @@ public class BestPracticeController {
     @GetMapping
     public ResponseEntity<Page<BestPracticeListItem>> list(
         @RequestParam(required = false) BestPracticeType type,
+        @RequestParam(required = false) String tag,
         @RequestParam(required = false) String search,
         @RequestParam(defaultValue = "newest") String sort,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "20") int size
     ) {
-        return ResponseEntity.ok(service.listPublished(type, search, sort, page, size));
+        return ResponseEntity.ok(service.listPublished(type, tag, search, sort, page, size));
     }
 
     @GetMapping("/{id}")

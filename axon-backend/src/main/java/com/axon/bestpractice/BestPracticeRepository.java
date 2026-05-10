@@ -15,10 +15,11 @@ public interface BestPracticeRepository extends JpaRepository<BestPractice, UUID
         SELECT * FROM best_practices bp
         WHERE bp.status = 'PUBLISHED'
           AND (:type IS NULL OR :type = ANY(bp.types))
+          AND (:tag IS NULL OR :tag = ANY(bp.tags))
           AND (:search IS NULL OR lower(bp.title) LIKE lower(concat('%', :search, '%'))
                OR lower(bp.description) LIKE lower(concat('%', :search, '%')))
         """, nativeQuery = true)
-    Page<BestPractice> findPublished(String type, String search, Pageable pageable);
+    Page<BestPractice> findPublished(String type, String tag, String search, Pageable pageable);
 
     List<BestPractice> findByAuthorIdOrderByCreatedAtDesc(UUID authorId);
 

@@ -98,14 +98,14 @@ public class BestPracticeService {
         repository.delete(bp);
     }
 
-    public Page<BestPracticeListItem> listPublished(BestPracticeType type, String search, String sort, int page, int size) {
+    public Page<BestPracticeListItem> listPublished(BestPracticeType type, String tag, String search, String sort, int page, int size) {
         Sort s = "trending".equals(sort)
             ? Sort.by(Sort.Direction.DESC, "usageScore")
             : Sort.by(Sort.Direction.DESC, "publishedAt");
         
         Pageable pageable = PageRequest.of(page, size, s);
         String typeStr = type != null ? type.name() : null;
-        return repository.findPublished(typeStr, search, pageable).map(BestPracticeListItem::from);
+        return repository.findPublished(typeStr, tag, search, pageable).map(BestPracticeListItem::from);
     }
 
     @Transactional

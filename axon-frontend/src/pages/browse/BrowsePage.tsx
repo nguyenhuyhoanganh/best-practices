@@ -3,21 +3,23 @@ import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { bpApi } from '../../api/auth';
 import { BestPracticeCard } from '../../components/ui/BestPracticeCard';
-import type { BPType, PagedResponse, BestPracticeListItem } from '../../types';
+import type { PagedResponse, BestPracticeListItem } from '../../types';
 
-const TYPES: { value: BPType | ''; label: string; icon: string }[] = [
-  { value: '', label: 'All Types', icon: '🌟' },
-  { value: 'SKILL_SET', label: 'Skill Sets', icon: '🔧' },
-  { value: 'MCP_CONFIG', label: 'MCP Configs', icon: '🔌' },
-  { value: 'RULE_SET', label: 'Rule Sets', icon: '📋' },
-  { value: 'AGENT_WORKFLOW', label: 'Workflows', icon: '⚡' },
+const ROLES = [
+  { value: '', label: 'All Roles', icon: '🌟' },
+  { value: 'backend', label: 'Backend', icon: '⚙️' },
+  { value: 'frontend', label: 'Frontend', icon: '🎨' },
+  { value: 'devops', label: 'DevOps', icon: '🚀' },
+  { value: 'ba', label: 'BA', icon: '📊' },
+  { value: 'pm', label: 'PM', icon: '👔' },
+  { value: 'mobile', label: 'Mobile', icon: '📱' },
 ];
 
 export function BrowsePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('search') || '');
 
-  const type = (searchParams.get('type') as BPType) || '';
+  const tag = searchParams.get('tag') || '';
   const sort = searchParams.get('sort') || 'newest';
   const page = parseInt(searchParams.get('page') || '0');
 
@@ -27,9 +29,9 @@ export function BrowsePage() {
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ['best-practices', type, searchParams.get('search'), sort, page],
+    queryKey: ['best-practices', tag, searchParams.get('search'), sort, page],
     queryFn: () => bpApi.list({ 
-      type: type || undefined, 
+      tag: tag || undefined, 
       search: searchParams.get('search') || undefined, 
       sort, 
       page 
@@ -53,7 +55,7 @@ export function BrowsePage() {
   return (
     <div className="space-y-10">
       {/* Trending Section */}
-      {trending && trending.length > 0 && !searchParams.get('search') && !type && (
+      {trending && trending.length > 0 && !searchParams.get('search') && !tag && (
         <section className="space-y-4">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🔥</span>
@@ -95,18 +97,18 @@ export function BrowsePage() {
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between border-b border-gray-100 pb-6">
           <div className="flex flex-wrap gap-2">
-            {TYPES.map(t => (
+            {ROLES.map(r => (
               <button
-                key={t.value}
-                onClick={() => updateParams({ type: t.value, page: '0' })}
+                key={r.value}
+                onClick={() => updateParams({ tag: r.value, page: '0' })}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all border ${
-                  type === t.value
+                  tag === r.value
                     ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-100'
                     : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600'
                 }`}
               >
-                <span>{t.icon}</span>
-                {t.label}
+                <span>{r.icon}</span>
+                {r.label}
               </button>
             ))}
           </div>
@@ -139,7 +141,7 @@ export function BrowsePage() {
               We couldn't find any best practices matching your criteria. Try adjusting your filters.
             </p>
             <button 
-              onClick={() => { setSearch(''); updateParams({ search: null, type: null, page: '0' }); }}
+              onClick={() => { setSearch(''); updateParams({ search: null, tag: null, page: '0' }); }}
               className="text-blue-600 font-bold hover:underline"
             >
               Clear all filters

@@ -10,7 +10,7 @@ export const authApi = {
 };
 
 export const bpApi = {
-  list: (params: { type?: BPType; search?: string; sort?: string; page?: number; size?: number }) =>
+  list: (params: { type?: BPType; tag?: string; search?: string; sort?: string; page?: number; size?: number }) =>
     api.get('/best-practices', { params }),
   trending: () => api.get('/best-practices/trending'),
   detail: (id: string) => api.get(`/best-practices/${id}`),
