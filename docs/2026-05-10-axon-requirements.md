@@ -1,14 +1,14 @@
 # AXon — Requirements Document
 
-**Version:** 1.0  
-**Date:** 2026-05-10  
+**Version:** 2.0  
+**Date:** 2026-05-11  
 **Status:** Draft
 
 ---
 
 ## 1. Tổng quan hệ thống
 
-AXon là nền tảng web nội bộ cho phép nhân viên công ty đăng ký, chia sẻ và khám phá các AI best practice trong lĩnh vực phát triển phần mềm. Hệ thống có quy trình kiểm duyệt trước khi công khai và cơ chế xếp hạng theo mức độ sử dụng.
+AXon là nền tảng web nội bộ cho phép nhân viên công ty đăng ký, chia sẻ và khám phá các AI best practice trong lĩnh vực phát triển phần mềm. Hệ thống có quy trình kiểm duyệt bởi AX Supporter trước khi công khai, cơ chế thu thập feedback từ người dùng và dashboard monitoring để theo dõi mức độ adoption.
 
 ---
 
@@ -16,115 +16,214 @@ AXon là nền tảng web nội bộ cho phép nhân viên công ty đăng ký, 
 
 | Vai trò | Mô tả |
 |---------|-------|
-| **Contributor (User)** | Nhân viên đăng ký và chia sẻ best practice |
-| **Admin** | Kiểm duyệt và phê duyệt best practice trước khi publish |
-| **Consumer (User)** | Nhân viên tìm kiếm, xem và tải best practice |
-| **PM** | Quản lý quy trình, thiết lập tiêu chí phê duyệt |
-| **System** | Agent Builder (hệ thống bên ngoài, đã tồn tại) |
+| **User** | Nhân viên tìm kiếm, xem, tải và sử dụng best practice; để lại feedback |
+| **AX Creator** | Nhân viên đăng ký, chỉnh sửa, quản lý best practice của mình; xem analytics và feedback |
+| **AX Supporter** | Kiểm duyệt và phê duyệt best practice; quản lý trạng thái BP; xem dashboard monitoring |
+| **Admin** | Quản lý người dùng và phân quyền |
+| **CIP/AD** | Hệ thống xác thực nội bộ Samsung (external system) |
 
 ---
 
-## 3. Functional Requirements
+## 3. Business Process
+
+```
+[AX Creator] Đăng ký BP → Submit
+  └─► [AX Supporter] Review
+        ├─ Reject (kèm comment) ──► [AX Creator] Chỉnh sửa → Resubmit ──► (lặp lại)
+        └─ Approve ──► PUBLISHED
+              │
+              ├─► [User] Xem, tải, sử dụng → Để lại feedback
+              │         │
+              │         └─► [AX Creator] Xem feedback + analytics để cải thiện BP
+              │
+              ├─► Usage data (view, download, like) ──► [AX Supporter] Monitor dashboard
+              │
+              └─► [AX Supporter] Close BP (kèm lý do) ──► CLOSED
+              └─► [AX Creator] Edit BP ──► REQUESTED (BP ẩn, chờ review lại)
+```
+
+---
+
+## 4. Functional Requirements
 
 ### FR-AUTH: Xác thực & Phân quyền
 
 | ID | Yêu cầu | Độ ưu tiên |
 |----|---------|-----------|
-| FR-AUTH-01 | Người dùng đăng nhập qua SSO của công ty (OAuth2/SAML/OIDC) | Must |
-| FR-AUTH-02 | Không có tài khoản local — SSO là bắt buộc | Must |
-| FR-AUTH-03 | Hệ thống cấp JWT access token (TTL 15 phút) và refresh token (TTL 7 ngày) sau khi SSO thành công | Must |
-| FR-AUTH-04 | Người dùng có thể đăng xuất, hệ thống huỷ session và refresh token | Must |
-| FR-AUTH-05 | Role USER là mặc định khi tài khoản mới được tạo | Must |
-| FR-AUTH-06 | Admin có thể nâng/hạ quyền của người dùng khác | Must |
-
-### FR-BP: Quản lý Best Practice
-
-| ID | Yêu cầu | Độ ưu tiên |
-|----|---------|-----------|
-| FR-BP-01 | Người dùng tạo best practice với trạng thái DRAFT | Must |
-| FR-BP-02 | Best practice có các loại: SKILL_SET, MCP_CONFIG, RULE_SET, AGENT_WORKFLOW | Must |
-| FR-BP-03 | Thông tin best practice gồm: tiêu đề, mô tả, loại, hướng dẫn sử dụng, hướng dẫn cài đặt, tags, liên kết ngoài | Must |
-| FR-BP-04 | Người dùng upload nhiều file đính kèm cho một best practice | Must |
-| FR-BP-05 | Người dùng submit best practice để chờ duyệt (DRAFT → PENDING_REVIEW) | Must |
-| FR-BP-06 | Người dùng chỉnh sửa best practice của mình khi đang ở trạng thái DRAFT hoặc REJECTED | Must |
-| FR-BP-07 | Người dùng xoá best practice của mình khi đang ở trạng thái DRAFT | Must |
-| FR-BP-08 | Best practice loại AGENT_WORKFLOW có trường liên kết đến workflow ID trong Agent Builder | Must |
-| FR-BP-09 | Người dùng xem danh sách best practice của mình kèm trạng thái hiện tại | Must |
-
-### FR-BROWSE: Tìm kiếm & Khám phá
-
-| ID | Yêu cầu | Độ ưu tiên |
-|----|---------|-----------|
-| FR-BROWSE-01 | Chỉ best practice có trạng thái PUBLISHED mới hiển thị trên trang browse | Must |
-| FR-BROWSE-02 | Người dùng lọc best practice theo loại (SKILL_SET, MCP_CONFIG, RULE_SET, AGENT_WORKFLOW) | Must |
-| FR-BROWSE-03 | Người dùng tìm kiếm theo từ khoá (tiêu đề, mô tả, tags) | Must |
-| FR-BROWSE-04 | Người dùng sắp xếp kết quả theo: mới nhất, phổ biến nhất (usage_score) | Must |
-| FR-BROWSE-05 | Trang chủ hiển thị section "Trending" — top 10 best practice theo usage_score | Must |
-| FR-BROWSE-06 | Người dùng xem chi tiết best practice: mô tả đầy đủ, files, links, usage guide, install guide | Must |
-| FR-BROWSE-07 | Người dùng download file đính kèm (yêu cầu đăng nhập) | Must |
-| FR-BROWSE-08 | Người dùng xem và truy cập workflow trong Agent Builder (với loại AGENT_WORKFLOW) | Must |
-
-### FR-APPROVAL: Quy trình kiểm duyệt
-
-| ID | Yêu cầu | Độ ưu tiên |
-|----|---------|-----------|
-| FR-APPROVAL-01 | Admin xem danh sách best practice chờ duyệt (PENDING_REVIEW, UNDER_REVIEW) | Must |
-| FR-APPROVAL-02 | Admin chuyển trạng thái sang UNDER_REVIEW khi bắt đầu xem xét | Must |
-| FR-APPROVAL-03 | Admin phê duyệt best practice → trạng thái chuyển sang PUBLISHED | Must |
-| FR-APPROVAL-04 | Admin từ chối best practice kèm comment lý do → trạng thái chuyển sang REJECTED | Must |
-| FR-APPROVAL-05 | Contributor nhận thông báo khi best practice được approve hoặc reject | Must |
-| FR-APPROVAL-06 | Admin xem toàn bộ lịch sử phê duyệt của một best practice | Should |
-| FR-APPROVAL-07 | Admin xem stats: tổng số BP theo trạng thái, tổng số người dùng | Should |
-
-### FR-RANKING: Xếp hạng
-
-| ID | Yêu cầu | Độ ưu tiên |
-|----|---------|-----------|
-| FR-RANKING-01 | Hệ thống ghi log mỗi lần người dùng VIEW, DOWNLOAD, hoặc WORKFLOW_USED | Must |
-| FR-RANKING-02 | usage_score được tính theo công thức: `(download × 3) + (workflow_used × 5) + (view × 0.5)` với time decay theo tuần | Must |
-| FR-RANKING-03 | usage_score được tính lại mỗi 1 giờ qua scheduled job | Must |
-| FR-RANKING-04 | Kết quả trending được cache vào Redis, TTL 1 giờ | Must |
-
-### FR-INTEGRATION: Agent Builder
-
-| ID | Yêu cầu | Độ ưu tiên |
-|----|---------|-----------|
-| FR-INT-01 | Backend proxy các request đến Agent Builder API | Must |
-| FR-INT-02 | Detail page của AGENT_WORKFLOW BP hiển thị thông tin workflow từ Agent Builder | Must |
-| FR-INT-03 | Khi người dùng nhấn "Use Workflow", hệ thống log WORKFLOW_USED và redirect/embed Agent Builder | Must |
+| FR-AUTH-01 | Người dùng đăng nhập qua CIP/AD của Samsung | Must |
+| FR-AUTH-02 | Không có tài khoản local — CIP/AD là bắt buộc | Must |
+| FR-AUTH-03 | Role mặc định là USER khi tài khoản mới được tạo | Must |
+| FR-AUTH-04 | Admin có thể nâng/hạ quyền người dùng (USER → AX_CREATOR → AX_SUPPORTER → ADMIN) | Must |
+| FR-AUTH-05 | Người dùng có thể đăng xuất | Must |
 
 ---
 
-## 4. Non-Functional Requirements
+### FR-LIBRARY: Thư viện Best Practice
+
+#### Epic: Library — View List BP (Card)
+
+| ID | Yêu cầu | Độ ưu tiên |
+|----|---------|-----------|
+| FR-LIB-01 | Hiển thị danh sách BP đã PUBLISHED dạng card gồm: name, description, thumbnail, job, work, creator (tên người đầu tiên + "+N others" nếu có nhiều) | Must |
+| FR-LIB-02 | Tất cả role (User, AX Supporter, Admin) đều có thể xem danh sách | Must |
+
+#### Epic: Library — Register BP
+
+| ID | Yêu cầu | Độ ưu tiên |
+|----|---------|-----------|
+| FR-LIB-03 | AX Creator đăng ký BP với các trường: name, description, installation guide, work (search/select từ danh sách), AI capability (search/select từ danh sách), AI tool (search/select từ danh sách), best practice type (WEB / TOOL / EXTENSION), key, creator(s) (search CIP theo danh sách) | Must |
+| FR-LIB-04 | BP type WEB: nhập nội dung text tối đa 256 ký tự (URL hoặc cấu hình dạng text) | Must |
+| FR-LIB-05 | BP type TOOL hoặc EXTENSION: cho phép upload file tối đa 50MB | Must |
+| FR-LIB-06 | Một BP có thể có nhiều creator — tìm kiếm và chọn theo CIP | Must |
+| FR-LIB-07 | Submit BP → status chuyển sang REQUESTED | Must |
+| FR-LIB-08 | AX Creator xem danh sách BP của mình (My BPs) với đầy đủ trạng thái | Must |
+
+#### Epic: Library — View Detail
+
+| ID | Yêu cầu | Độ ưu tiên |
+|----|---------|-----------|
+| FR-LIB-09 | Xem chi tiết BP: hiển thị đầy đủ thông tin, trường "key" bị ẩn với User thông thường | Must |
+| FR-LIB-10 | Chi tiết BP hiển thị: view count, like count, download count | Must |
+| FR-LIB-11 | User, AX Supporter, Admin đều xem được detail | Must |
+| FR-LIB-12 | Trường "key" hiển thị với AX Creator (là owner của BP), AX Supporter và Admin | Must |
+
+#### Epic: Library — Like
+
+| ID | Yêu cầu | Độ ưu tiên |
+|----|---------|-----------|
+| FR-LIB-13 | User có thể like BP từ trang detail (toggle like/unlike) | Must |
+| FR-LIB-14 | Mỗi user chỉ like được 1 lần mỗi BP; like count cập nhật realtime | Must |
+
+#### Epic: Library — Sort & Filter
+
+| ID | Yêu cầu | Độ ưu tiên |
+|----|---------|-----------|
+| FR-LIB-15 | Filter theo: job, AI capability, work category, work, department, best practice type, AI tool | Must |
+| FR-LIB-16 | Sort theo: job, work category, work | Must |
+| FR-LIB-17 | Tìm kiếm full-text theo name và description | Must |
+| FR-LIB-18 | Tất cả role đều có thể sử dụng filter, sort và search | Must |
+
+#### Epic: Library — Edit BP (AX Creator)
+
+| ID | Yêu cầu | Độ ưu tiên |
+|----|---------|-----------|
+| FR-LIB-19 | AX Creator chỉnh sửa BP khi status là REQUESTED hoặc REJECTED | Must |
+| FR-LIB-20 | AX Creator chỉnh sửa BP đang PUBLISHED: nút Edit ẩn đi khi chưa thao tác; khi submit lại → BP chuyển sang REQUESTED và bị ẩn khỏi library, chờ review lại | Must |
+| FR-LIB-21 | BP ở trạng thái CLOSED không thể chỉnh sửa | Must |
+
+#### Epic: Library — Delete BP (AX Creator)
+
+| ID | Yêu cầu | Độ ưu tiên |
+|----|---------|-----------|
+| FR-LIB-22 | AX Creator xoá BP khi status là REQUESTED hoặc REJECTED | Must |
+| FR-LIB-23 | BP ở trạng thái PUBLISHED hoặc CLOSED không thể xoá | Must |
+
+#### Epic: Library — My BPs Management (AX Creator)
+
+| ID | Yêu cầu | Độ ưu tiên |
+|----|---------|-----------|
+| FR-LIB-24 | AX Creator xem danh sách BP của mình với: search theo name, xem detail, edit, delete theo từng trạng thái | Must |
+| FR-LIB-25 | AX Creator xem analytics BP của mình: view count, download count, like count, feedback | Should |
+
+---
+
+### FR-MANAGEMENT: Quản lý Best Practice (AX Supporter)
+
+| ID | Yêu cầu | Độ ưu tiên |
+|----|---------|-----------|
+| FR-MGT-01 | AX Supporter xem danh sách toàn bộ BP (management list) với filter theo status | Must |
+| FR-MGT-02 | AX Supporter review BP: xem đầy đủ chi tiết bao gồm trường "key" | Must |
+| FR-MGT-03 | AX Supporter approve BP → status chuyển PUBLISHED, AX Creator nhận thông báo | Must |
+| FR-MGT-04 | AX Supporter reject BP kèm comment bắt buộc → status chuyển REJECTED, AX Creator nhận thông báo | Must |
+| FR-MGT-05 | AX Supporter không thể tự approve BP mà mình là creator | Must |
+| FR-MGT-06 | AX Supporter close BP đang PUBLISHED: nhập lý do bắt buộc → status chuyển CLOSED, BP ẩn khỏi library | Must |
+| FR-MGT-07 | AX Supporter xem lịch sử review của một BP | Should |
+
+---
+
+### FR-FEEDBACK: Feedback
+
+| ID | Yêu cầu | Độ ưu tiên |
+|----|---------|-----------|
+| FR-FB-01 | User để lại feedback (text) trên BP đã PUBLISHED | Must |
+| FR-FB-02 | AX Creator xem danh sách feedback của BP mình | Must |
+| FR-FB-03 | AX Supporter xem feedback của tất cả BP | Should |
+
+---
+
+### FR-DASHBOARD: Dashboard Monitoring
+
+| ID | Yêu cầu | Độ ưu tiên |
+|----|---------|-----------|
+| FR-DASH-01 | Dashboard hiển thị tổng số người đã submit BP | Must |
+| FR-DASH-02 | Dashboard hiển thị tổng số BP theo từng trạng thái (REQUESTED, PUBLISHED, REJECTED, CLOSED) | Must |
+| FR-DASH-03 | Dashboard hiển thị số lượng job, số lượng AI capability, số lượng department trong hệ thống | Must |
+| FR-DASH-04 | Dashboard hiển thị Top 5 Creator (theo số BP đã published) | Must |
+| FR-DASH-05 | Dashboard hiển thị Top 5 Work (theo số BP liên quan) | Must |
+| FR-DASH-06 | AX Supporter xem full dashboard | Must |
+
+---
+
+## 5. BP Status Flow
+
+```
+[AX Creator submit] ──────────────────────────► REQUESTED
+                                                    │
+                          ┌─────────────────────────┤
+                          │                         │
+                     [AX Supporter]            [AX Supporter]
+                       Reject                    Approve
+                          │                         │
+                          ▼                         ▼
+                       REJECTED                  PUBLISHED
+                          │                    │         │
+              [AX Creator edit              [AX Creator  [AX Supporter
+               + resubmit]                   edit]        close]
+                          │                    │               │
+                          └───► REQUESTED ◄────┘          CLOSED
+                                (BP ẩn khỏi library)
+```
+
+**Quy tắc chỉnh sửa theo trạng thái:**
+
+| Status | AX Creator có thể | AX Supporter có thể |
+|--------|------------------|---------------------|
+| REQUESTED | Edit, Delete | Approve, Reject |
+| REJECTED | Edit, Delete, Resubmit | — |
+| PUBLISHED | Edit (→ REQUESTED, BP ẩn) | Close |
+| CLOSED | — | — |
+
+---
+
+## 6. Non-Functional Requirements
 
 ### NFR-SEC: Bảo mật
 
 | ID | Yêu cầu |
 |----|---------|
-| NFR-SEC-01 | Tất cả API endpoint yêu cầu xác thực JWT (trừ `/auth/*` và public browse) |
-| NFR-SEC-02 | File download dùng pre-signed URL với TTL 15 phút — không expose storage key |
-| NFR-SEC-03 | CORS chỉ cho phép origin của frontend domain |
+| NFR-SEC-01 | Tất cả API endpoint yêu cầu xác thực (trừ public browse) |
+| NFR-SEC-02 | Trường "key" trong BP chỉ hiển thị với owner (AX Creator), AX Supporter và Admin |
+| NFR-SEC-03 | File download dùng pre-signed URL với TTL 15 phút — không expose storage key |
 | NFR-SEC-04 | Input validation trên tất cả API: max length, allowed types, sanitize |
 | NFR-SEC-05 | Rate limiting: 100 req/phút/user cho API thông thường, 10 req/phút cho upload |
-| NFR-SEC-06 | JWT không chứa thông tin nhạy cảm ngoài user ID và role |
 
 ### NFR-PERF: Hiệu năng
 
 | ID | Yêu cầu |
 |----|---------|
 | NFR-PERF-01 | Browse API trả về trong < 500ms ở P95 |
-| NFR-PERF-02 | File upload tối đa 50MB mỗi file |
-| NFR-PERF-03 | Trending API dùng Redis cache — TTL 1 giờ |
-| NFR-PERF-04 | Database index trên: `best_practices.status`, `best_practices.type`, `best_practices.usage_score` |
+| NFR-PERF-02 | File upload tối đa 50MB/file (type TOOL và EXTENSION) |
+| NFR-PERF-03 | Text content tối đa 256 ký tự (type WEB) |
+| NFR-PERF-04 | Database index trên: status, type, work_id, like_count, view_count, download_count |
 
 ### NFR-UX: Trải nghiệm người dùng
 
 | ID | Yêu cầu |
 |----|---------|
-| NFR-UX-01 | Giao diện responsive — hỗ trợ desktop (1280px+) và tablet (768px+) |
+| NFR-UX-01 | Giao diện responsive — desktop (1280px+) và tablet (768px+) |
 | NFR-UX-02 | Loading state hiển thị khi fetch data |
 | NFR-UX-03 | Error message rõ ràng khi thao tác thất bại |
-| NFR-UX-04 | Submit form có auto-save DRAFT để tránh mất dữ liệu |
+| NFR-UX-04 | Form đăng ký có auto-save draft để tránh mất dữ liệu |
 
 ### NFR-OPS: Vận hành
 
@@ -132,102 +231,116 @@ AXon là nền tảng web nội bộ cho phép nhân viên công ty đăng ký, 
 |----|---------|
 | NFR-OPS-01 | Môi trường dev chạy hoàn toàn qua Docker Compose |
 | NFR-OPS-02 | Health check endpoint: `GET /actuator/health` |
-| NFR-OPS-03 | Structured logging (JSON format) để dễ tích hợp với log aggregator |
+| NFR-OPS-03 | Structured logging (JSON format) để tích hợp với log aggregator |
 | NFR-OPS-04 | Database migration tự động qua Flyway khi startup |
 
 ---
 
-## 5. User Stories
+## 7. User Stories
 
-### Contributor
-
-```
-US-C-01: Là một developer, tôi muốn đăng ký skill set tôi dùng hàng ngày
-         để đồng nghiệp có thể tìm thấy và dùng lại.
-
-US-C-02: Là một contributor, tôi muốn đính kèm file cấu hình vào best practice
-         để người dùng có thể tải về và dùng ngay.
-
-US-C-03: Là một contributor, tôi muốn biết trạng thái review của best practice mình đã submit
-         và nhận thông báo khi có kết quả.
-
-US-C-04: Là một contributor, tôi muốn chỉnh sửa best practice bị reject
-         dựa theo feedback của admin rồi submit lại.
-```
-
-### Consumer
+### User (Consumer)
 
 ```
-US-U-01: Là một developer mới, tôi muốn tìm kiếm MCP config cho Confluence
-         để tích hợp vào workflow của mình mà không cần tự nghiên cứu.
+US-U-01: Là developer, tôi muốn tìm kiếm và filter BP theo job và AI capability
+         để tìm nhanh tool phù hợp với công việc của mình.
 
-US-U-02: Là một user, tôi muốn xem những best practice phổ biến nhất
-         để biết cộng đồng đang dùng gì hiệu quả.
+US-U-02: Là user, tôi muốn xem chi tiết BP bao gồm installation guide
+         để cài đặt và sử dụng ngay mà không cần tự nghiên cứu.
 
-US-U-03: Là một user, tôi muốn tải file cấu hình về máy
-         để áp dụng ngay vào dự án của mình.
+US-U-03: Là user, tôi muốn like các BP tôi thấy hữu ích
+         để đóng góp vào chất lượng xếp hạng cộng đồng.
 
-US-U-04: Là một user, tôi muốn truy cập workflow trong Agent Builder trực tiếp từ AXon
-         để không cần chuyển qua lại giữa hai hệ thống.
+US-U-04: Là user, tôi muốn để lại feedback cho BP
+         để giúp creator cải thiện nội dung.
+```
+
+### AX Creator
+
+```
+US-C-01: Là AX Creator, tôi muốn đăng ký best practice kèm file hoặc link
+         để chia sẻ kiến thức với đồng nghiệp.
+
+US-C-02: Là AX Creator, tôi muốn biết trạng thái review và nhận thông báo
+         khi BP được approve hoặc reject.
+
+US-C-03: Là AX Creator, tôi muốn chỉnh sửa BP bị reject dựa trên comment của AX Supporter
+         rồi submit lại.
+
+US-C-04: Là AX Creator, tôi muốn xem analytics (view, download, like, feedback) của BP mình
+         để hiểu mức độ hữu ích và cải thiện chất lượng.
+```
+
+### AX Supporter
+
+```
+US-S-01: Là AX Supporter, tôi muốn xem danh sách BP đang chờ review
+         để xử lý theo thứ tự ưu tiên.
+
+US-S-02: Là AX Supporter, tôi muốn review đầy đủ nội dung BP (kể cả key)
+         trước khi quyết định approve hoặc reject.
+
+US-S-03: Là AX Supporter, tôi muốn close BP với lý do cụ thể
+         khi BP không còn phù hợp để dùng nữa.
+
+US-S-04: Là AX Supporter, tôi muốn xem dashboard monitoring
+         để nắm bắt tình trạng hệ thống và mức độ adoption của team.
 ```
 
 ### Admin
 
 ```
-US-A-01: Là admin, tôi muốn thấy danh sách best practice đang chờ duyệt
-         để xử lý theo thứ tự ưu tiên.
-
-US-A-02: Là admin, tôi muốn xem đầy đủ nội dung (file, links, hướng dẫn) của best practice
-         trước khi quyết định approve hoặc reject.
-
-US-A-03: Là admin, tôi muốn để lại comment khi reject
-         để contributor hiểu lý do và cải thiện.
-
-US-A-04: Là admin, tôi muốn quản lý danh sách user và phân quyền
-         để kiểm soát ai có thể trở thành admin.
+US-A-01: Là Admin, tôi muốn quản lý danh sách user và phân quyền
+         để kiểm soát ai có thể tạo, review hay quản lý hệ thống.
 ```
 
 ---
 
-## 6. Acceptance Criteria (chính)
+## 8. Acceptance Criteria
 
-### AC-01: Đăng ký Best Practice thành công
-- Given: User đã đăng nhập
-- When: User điền đầy đủ thông tin (title, type, description) và nhấn Submit
-- Then: BP tạo với status DRAFT, user thấy trong "My Submissions"
+### AC-01: Đăng ký BP thành công
+- Given: User đã đăng nhập với role AX Creator
+- When: Điền đầy đủ thông tin bắt buộc và nhấn Submit
+- Then: BP tạo với status REQUESTED, xuất hiện trong "My BPs", AX Supporter nhận thông báo
 
-### AC-02: Submit để review
-- Given: BP đang ở status DRAFT
-- When: User nhấn "Submit for Review"
-- Then: Status chuyển sang PENDING_REVIEW, admin nhận thông báo
+### AC-02: AX Supporter approve
+- Given: BP đang REQUESTED
+- When: AX Supporter nhấn Approve
+- Then: Status chuyển PUBLISHED, AX Creator nhận thông báo, BP xuất hiện trên library
 
-### AC-03: Admin approve
-- Given: BP đang PENDING_REVIEW hoặc UNDER_REVIEW
-- When: Admin nhấn Approve
-- Then: Status chuyển PUBLISHED, contributor nhận email thông báo, BP xuất hiện trên browse
+### AC-03: AX Supporter reject
+- Given: BP đang REQUESTED
+- When: AX Supporter nhấn Reject kèm comment
+- Then: Status chuyển REJECTED, AX Creator nhận thông báo với lý do; creator có thể edit và resubmit
 
-### AC-04: Admin reject
-- Given: BP đang PENDING_REVIEW hoặc UNDER_REVIEW
-- When: Admin nhấn Reject với comment
-- Then: Status chuyển REJECTED, contributor nhận email với lý do
+### AC-04: AX Creator edit Published BP
+- Given: BP đang PUBLISHED
+- When: AX Creator chỉnh sửa và submit lại
+- Then: Status chuyển REQUESTED, BP bị ẩn khỏi library, chờ AX Supporter review lại
 
-### AC-05: Download file
-- Given: BP đã PUBLISHED, user đã đăng nhập
-- When: User nhấn Download trên file
-- Then: File download bắt đầu, hệ thống log action DOWNLOAD
+### AC-05: Like BP
+- Given: User đang xem detail BP đã PUBLISHED
+- When: User nhấn Like
+- Then: Like count tăng 1, button chuyển trạng thái "liked"; nhấn lại thì unlike
 
-### AC-06: Trending cập nhật
-- Given: User download một BP 5 lần trong 1 giờ
-- When: Ranking job chạy
-- Then: BP đó tăng usage_score và xuất hiện trong danh sách trending
+### AC-06: Close BP
+- Given: BP đang PUBLISHED
+- When: AX Supporter nhấn Close và nhập lý do
+- Then: Status chuyển CLOSED, BP bị ẩn khỏi library, lý do được lưu
+
+### AC-07: Self-approve restriction
+- Given: AX Supporter là creator của một BP đang REQUESTED
+- When: AX Supporter cố gắng approve BP đó
+- Then: Hệ thống hiển thị lỗi "Bạn không thể tự approve BP của mình"
 
 ---
 
-## 7. Constraints & Assumptions
+## 9. Constraints & Assumptions
 
-- SSO provider chưa xác định — thiết kế dạng plugin, dev dùng mock SSO
-- Agent Builder đã tồn tại và có REST API — AXon chỉ proxy, không tự build
-- File storage: MinIO trong dev, có thể thay bằng S3 trên prod
-- Không có tính năng comment/thảo luận trong scope này
-- Không có tính năng versioning cho best practice trong scope này
-- Notification trong phase đầu chỉ là email, in-app notification là nice-to-have
+- Login qua CIP/AD của Samsung — dev dùng mock CIP
+- BP type WEB: không có file upload, chỉ text tối đa 256 ký tự (URL hoặc config text)
+- BP type TOOL và EXTENSION: upload file tối đa 50MB
+- Trường "key" là thông tin nhạy cảm, ẩn với User thông thường
+- Một BP có thể có nhiều creator (tìm kiếm theo CIP)
+- Không có versioning cho BP — edit published BP = tạo version mới qua review
+- Notification trong phase đầu chỉ là email
+- Các danh sách lookup (job, AI capability, work, work category, department, AI tool) do Admin quản lý
