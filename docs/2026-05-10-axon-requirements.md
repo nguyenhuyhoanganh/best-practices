@@ -84,7 +84,7 @@ AXon là nền tảng web nội bộ cho phép nhân viên công ty đăng ký, 
 |----|---------|-----------|
 | FR-LIB-09 | Xem chi tiết BP: hiển thị đầy đủ thông tin, trường "key" bị ẩn với User thông thường | Must |
 | FR-LIB-10 | Chi tiết BP hiển thị: view count, like count, download count | Must |
-| FR-LIB-11 | User, AX Supporter, Admin đều xem được detail | Must |
+| FR-LIB-11 | User, AX Creator, AX Supporter, Admin đều xem được detail | Must |
 | FR-LIB-12 | Trường "key" hiển thị với AX Creator (là owner của BP), AX Supporter và Admin | Must |
 
 #### Epic: Library — Like
@@ -99,7 +99,7 @@ AXon là nền tảng web nội bộ cho phép nhân viên công ty đăng ký, 
 | ID | Yêu cầu | Độ ưu tiên |
 |----|---------|-----------|
 | FR-LIB-15 | Filter theo: job, AI capability, work category, work, department, best practice type, AI tool | Must |
-| FR-LIB-16 | Sort theo: job, work category, work | Must |
+| FR-LIB-16 | Sort theo: job, work category, work — alphabetical theo tên phần tử đầu tiên được gán cho BP (một BP có nhiều job → dùng tên job đầu tiên để sort) | Must |
 | FR-LIB-17 | Tìm kiếm full-text theo name và description | Must |
 | FR-LIB-18 | Tất cả role đều có thể sử dụng filter, sort và search | Must |
 
