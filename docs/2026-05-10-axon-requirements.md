@@ -164,6 +164,21 @@ AXon là nền tảng web nội bộ cho phép nhân viên công ty đăng ký, 
 
 ---
 
+### FR-LOOKUP: Quản lý danh mục (Admin)
+
+Các danh mục lookup gồm: **Job**, **AI Capability**, **Work Category**, **Work**, **Department**, **AI Tool**.
+
+| ID | Yêu cầu | Độ ưu tiên |
+|----|---------|-----------|
+| FR-LOOKUP-01 | Admin xem danh sách các mục trong từng danh mục | Must |
+| FR-LOOKUP-02 | Admin thêm mục mới vào từng danh mục | Must |
+| FR-LOOKUP-03 | Admin sửa tên/thông tin của mục trong danh mục | Must |
+| FR-LOOKUP-04 | Admin xoá mục trong danh mục; hệ thống chặn xoá nếu còn BP đang tham chiếu | Must |
+| FR-LOOKUP-05 | Admin điều chỉnh thứ tự hiển thị (display_order) của các mục trong danh mục | Should |
+| FR-LOOKUP-06 | Work phải thuộc một Work Category; khi tạo Work phải chọn Work Category | Must |
+
+---
+
 ## 5. BP Status Flow
 
 ```

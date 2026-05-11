@@ -303,7 +303,7 @@ PUT /api/v1/admin/users/:id/role      — cập nhật role
 GET /api/v1/dashboard                 — stats tổng quan (AX Supporter)
 ```
 
-### Lookup / Reference Data
+### Lookup / Reference Data (Public Read)
 
 ```
 GET /api/v1/jobs
@@ -312,6 +312,25 @@ GET /api/v1/work-categories
 GET /api/v1/works?workCategoryId=...
 GET /api/v1/departments
 GET /api/v1/ai-tools
+```
+
+### Admin — Quản lý danh mục (CRUD)
+
+Admin có thể thêm, sửa, xoá các mục trong từng danh mục. Áp dụng cho cả 6 lookup: **job**, **ai-capability**, **work-category**, **work**, **department**, **ai-tool**.
+
+```
+# Pattern chung — ví dụ với jobs:
+GET    /api/v1/admin/jobs              — danh sách
+POST   /api/v1/admin/jobs              — tạo mới
+PUT    /api/v1/admin/jobs/:id          — sửa
+DELETE /api/v1/admin/jobs/:id          — xoá (lỗi 409 nếu còn BP tham chiếu)
+
+# Tương tự cho:
+/api/v1/admin/ai-capabilities/:id
+/api/v1/admin/work-categories/:id
+/api/v1/admin/works/:id          (body include work_category_id)
+/api/v1/admin/departments/:id
+/api/v1/admin/ai-tools/:id
 ```
 
 ---
@@ -361,6 +380,7 @@ GET /api/v1/ai-tools
 | Approve / Reject / Close | ❌ | ❌ | ✅ (không self-approve) | ✅ |
 | Dashboard monitoring | ❌ | ❌ | ✅ | ✅ |
 | Quản lý user & roles | ❌ | ❌ | ❌ | ✅ |
+| CRUD danh mục lookup | ❌ | ❌ | ❌ | ✅ |
 
 ---
 
