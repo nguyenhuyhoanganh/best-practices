@@ -84,16 +84,17 @@ AXon (AI eXchange on) là nền tảng chia sẻ và quản lý AI Best Practice
 #### FR-LIB-02 — Register BP
 - **Mô tả:** Đăng ký best practice mới
 - **Fields:**
+  - `thumbnail_url`: URL ảnh thumbnail (text, ≤500 ký tự, tùy chọn)
   - `name`: text, bắt buộc
   - `description`: text, bắt buộc
-  - `installation_guide`: text/rich text, bắt buộc
-  - `work`: chọn từ danh sách (search + select), bắt buộc
+  - `installation_guide`: text/rich text, bắt buộc, tối đa 10000 ký tự
+  - `work`: chọn từ danh sách tổ chức theo hierarchy Job → Work Category → Work (search + select); khi chọn 1 work, work_category được xác định ngầm theo dữ liệu master. Chỉ cần 1 selector duy nhất cho work (không cần chọn work_category riêng khi đăng ký BP)
   - `ai_capability`: chọn từ danh sách (search + select), bắt buộc
   - `ai_tools`: text mô tả công cụ cụ thể, tùy chọn
   - `type`: WEB / TOOL / EXTENSION
     - Nếu WEB: nhập URL (≤256 ký tự)
     - Nếu TOOL hoặc EXTENSION: upload file (≤50MB)
-  - `key`: text nhạy cảm, ẩn khi hiển thị ở library
+  - `key`: nội dung nhạy cảm liên quan đến cài đặt BP (ví dụ: API key, license key, credentials cần thiết để sử dụng); ẩn với USER thông thường, chỉ hiển thị với owner/AX_CREATOR, AX_SUPPORTER, ADMIN
   - `creators`: search CIP theo tên/email, multi-select; phải bao gồm người đang tạo
 - **Khi submit:** status → `REQUESTED`; nếu submitter chưa có role `AX_CREATOR` → auto promote
 - **Role:** USER (và AX_CREATOR, ADMIN)
@@ -114,7 +115,8 @@ AXon (AI eXchange on) là nền tảng chia sẻ và quản lý AI Best Practice
 #### FR-LIB-05 — Sort & Filter
 - **Mô tả:** Lọc và sắp xếp danh sách BP trong Library
 - **Filter by:** job, AI capability, work category, work, department, BP type, AI tool
-- **Sort by:** job, work category, work
+- **Sort by:** job, work category, work, published date (mặc định: published date giảm dần), usage count (tổng download)
+- **Search:** full-text search theo name và description
 - **Ví dụ job values:** Code Implementation, Research, Operation, Report
 - **Ví dụ AI capability values:** Q&A, Workflow Assistant, Autonomous AI Agent, AI-based Tools & Applications, AI Orchestration
 - **Role:** USER, AX_SUPPORTER, ADMIN
@@ -125,7 +127,8 @@ AXon (AI eXchange on) là nền tảng chia sẻ và quản lý AI Best Practice
 
 #### FR-MY-01 — View List My BP
 - **Mô tả:** AX Creator xem danh sách tất cả BP của mình (mọi trạng thái)
-- **Columns:** thumbnail, BP name, BP type, status, job, AI capability, submitter, submitted date, comment (từ reviewer), action (edit, delete)
+- **Columns:** thumbnail, BP name, BP type, status, job, AI capability, submitter, submitted date, comment (từ reviewer: lý do reject hoặc close reason), action (edit, delete)
+- **Note:** BP có status = `REJECTED` có thể do 2 nguyên nhân: (1) Supporter reject sau review, hoặc (2) Supporter close BP đang published. Comment column phân biệt bằng nội dung (review comment vs close reason).
 - **Role:** AX_CREATOR
 
 #### FR-MY-02 — Edit BP
@@ -170,7 +173,7 @@ AXon (AI eXchange on) là nền tảng chia sẻ và quản lý AI Best Practice
 #### FR-MGT-03 — Close BP
 - **Mô tả:** Đóng BP đang published
 - **Điều kiện:** BP phải có status = `PUBLISHED`
-- **Action:** status → `REJECTED`; nhập close reason (popup riêng biệt với review)
+- **Action:** status → `REJECTED`; nhập close reason (popup riêng biệt với review popup); close reason lưu riêng để phân biệt với reject comment từ review
 - **Ý nghĩa:** BP ẩn khỏi library; Creator có thể edit và submit lại
 - **Role:** AX_SUPPORTER, ADMIN
 
@@ -220,8 +223,9 @@ AXon (AI eXchange on) là nền tảng chia sẻ và quản lý AI Best Practice
 
 #### FR-USER-01 — Manage User & Permission
 - **Mô tả:** Admin assign role elevated cho user
-- **Roles có thể assign:** `ADMIN`, `AX_SUPPORTER`
-- **Lưu ý:** `USER → AX_CREATOR` tự động khi tạo BP đầu tiên (không cần Admin)
+- **Roles có thể assign/thay đổi:** `ADMIN`, `AX_SUPPORTER`
+- **Lưu ý:** `USER → AX_CREATOR` tự động khi tạo BP đầu tiên; Admin không thể revoke AX_CREATOR (role này chỉ được gán tự động, không quản lý thủ công)
+- **Downgrade:** Admin có thể thay đổi role giữa USER, AX_SUPPORTER, ADMIN (ví dụ: revoke AX_SUPPORTER → USER); không ảnh hưởng đến BP hiện có
 - **Role:** ADMIN
 
 ---
@@ -238,7 +242,7 @@ AXon (AI eXchange on) là nền tảng chia sẻ và quản lý AI Best Practice
   - Count by department (= SRV Group từ CIP/AD)
   - Top 5 Best Practice by work (số BP theo work, giảm dần)
   - Total usage (tổng lượt install/download)
-  - Active users (users có interaction trong kỳ)
+  - Active users (số user unique có ít nhất 1 interaction trong khoảng ngày được chọn; interaction = view, like, download, hoặc submit feedback)
   - Usage trend (biểu đồ 6 tháng gần nhất)
   - Top 5 usage (số lượt theo BP, giảm dần)
 - **Interaction:**
@@ -263,6 +267,24 @@ AXon (AI eXchange on) là nền tảng chia sẻ và quản lý AI Best Practice
 | AI Orchestration | AI-driven products | AI-driven UX, AI-driven logic and workflows |
 
 - **Role:** tất cả roles
+
+---
+
+### 5.8 Epic: Feedback
+
+#### FR-FEED-01 — Submit Feedback
+- **Mô tả:** User để lại feedback text cho BP đã PUBLISHED
+- **Fields:** `content` (text, tối đa 2000 ký tự, bắt buộc)
+- **Role:** USER, AX_SUPPORTER, ADMIN
+
+#### FR-FEED-02 — View Feedback (Creator)
+- **Mô tả:** AX Creator xem danh sách feedback của BP mình
+- **Hiển thị:** content, user name, created_at; paginated
+- **Role:** AX_CREATOR (chỉ BP của mình)
+
+#### FR-FEED-03 — View Feedback (Supporter)
+- **Mô tả:** AX Supporter xem feedback của tất cả BP
+- **Role:** AX_SUPPORTER, ADMIN
 
 ---
 
@@ -302,7 +324,7 @@ AXon (AI eXchange on) là nền tảng chia sẻ và quản lý AI Best Practice
 
 ## 7. Constraints & Assumptions
 
-- Login qua Samsung CIP/AD; dev dùng mock SSO (auth tích hợp thật ở Phase P11)
+- Login qua Samsung CIP/AD; dev dùng MockSSOProvider với 4 hardcoded users: `user1` (USER), `creator1` (AX_CREATOR), `supporter1` (AX_SUPPORTER), `admin1` (ADMIN) — auth tích hợp thật ở Phase P11
 - Không có versioning cho BP — edit published BP = resubmit để review
 - Department lấy từ CIP/AD khi SSO; P0–P10 dùng giá trị hardcode
 - "Token count per user/project" cần nối hệ thống khác — không implement trong scope này
