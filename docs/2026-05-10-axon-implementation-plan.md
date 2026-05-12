@@ -16,9 +16,9 @@
 | P3 | BP Library — CRUD + file upload | Creator đăng ký BP, user xem library |
 | P4 | BP Lifecycle — submit/review/approve/reject/close/edit | Toàn bộ workflow BP |
 | P5 | My Practice — view list, edit, delete | Creator quản lý BP của mình |
-| P6 | Manage BP (Supporter) — view, review, close | Supporter review được |
-| P7 | Interactions — like, feedback, download tracking | Engagement features |
-| P8 | Dashboard & monitoring | Dashboard đầy đủ metrics |
+| P6 | Interactions — like, feedback, download tracking | Engagement features |
+| P7 | Dashboard & monitoring | Dashboard đầy đủ metrics |
+| P8 | User Management (Admin) — assign role | Admin quản lý role người dùng |
 | P9 | FE hoàn thiện — i18n EN/VI, responsive, AI Insight page | FE production-ready |
 | P10 | NFR — performance test, CI/CD, Swagger, SonarQube | Non-functionals pass |
 | P11 | Auth thật — Samsung CIP/AD SSO integration | SSO login hoạt động |
