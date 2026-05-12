@@ -1,8 +1,8 @@
 # AXon Docs Update — Design Spec
 
 **Ngày:** 2026-05-12
-**Phạm vi:** Viết lại hoàn toàn 4 docs theo spec v2 của người dùng
-**Approach:** Full rewrite — mỗi doc là tài liệu standalone, đầy đủ, tự đứng được; không dùng kiểu "patch/diff"
+**Phạm vi:** Cập nhật 4 docs theo spec v2 của người dùng
+**Approach:** Mixed — viết lại requirements.md + implementation-plan.md; chỉnh sửa HLD.md + DLD.md (output vẫn là doc hoàn chỉnh, standalone)
 
 ---
 
@@ -72,45 +72,48 @@
 
 ---
 
-### 2.2 `HLD.md` — Viết lại hoàn toàn
+### 2.2 `HLD.md` — Chỉnh sửa (output: doc hoàn chỉnh)
 
-Tài liệu standalone mô tả toàn bộ kiến trúc hệ thống AXon v2. Bao gồm:
+**Thêm:**
+- Module `Master Data Service` (job/work-category/work/ai-capability)
+- Module `Dashboard Service` (aggregation, usage tracking)
+- Module `AI Insight Module` (static content + classification display)
+- `File Storage`: local filesystem qua Docker volume mount; Spring `FileSystemStorageService`
+- Auth note: "Login via Samsung CIP/AD (OAuth 2.0/SSO); JWT issued after SSO callback; implementation in P11"
 
-- **Tech stack:** Spring Boot 3, PostgreSQL, Redis cache, React (FE), Docker Compose
-- **Modules:** Library, My Practice, Manage BP, Master Data, Dashboard, AI Insight, User Management
-- **Auth:** Samsung CIP/AD OAuth 2.0/SSO → JWT; app enforce RBAC; SSO implementation P11
-- **File storage:** Docker volume (local filesystem); `FileSystemStorageService`; không dùng MinIO/S3
-- **BP state machine:** `REQUESTED → PUBLISHED → REJECTED`; Close = `PUBLISHED → REJECTED`
-- **Component diagram:** tất cả services, DB, cache, storage, external (CIP/AD)
-- **NFR summary:** p95 < 3s, >200 concurrent, WCAG 2.1 AA, i18n EN/VI
+**Sửa:**
+- Bỏ MinIO/S3 và `StorageService` (MinIO client)
+- State machine: `REQUESTED ↔ REJECTED ↔ PUBLISHED` (bỏ CLOSED)
+- Cập nhật component diagram
+
+**Giữ nguyên:**
+- Spring Boot + PostgreSQL + Redis cache
+- JWT auth middleware
+- REST API structure
+- Docker Compose setup
 
 ---
 
-### 2.3 `DLD.md` — Viết lại hoàn toàn
+### 2.3 `DLD.md` — Chỉnh sửa (output: doc hoàn chỉnh)
 
-Tài liệu standalone mô tả toàn bộ thiết kế kỹ thuật chi tiết. Bao gồm:
+**Schema changes:**
 
-**Database schema (đầy đủ, tất cả bảng):**
-- `users`, `roles`, `user_roles`
-- `jobs`, `work_categories`, `works`
-- `ai_capabilities` (id, name, description, is_default)
-- `best_practices` (file_path VARCHAR(500), file_url VARCHAR(256); enum: REQUESTED/REJECTED/PUBLISHED)
-- `bp_creators`, `bp_ai_capabilities`
-- `bp_likes`, `bp_downloads`, `bp_feedback`
-- `bp_reviews` (comment, action: APPROVED/REJECTED/CLOSED)
+| Bảng | Thay đổi |
+|------|----------|
+| `best_practices` | Bỏ `minio_bucket`, `minio_key`; thêm `file_path VARCHAR(500)`, `file_url VARCHAR(256)`; enum `bp_status` còn 3 giá trị |
+| `ai_capabilities` | Bảng mới: `id, name VARCHAR(256) UNIQUE, description TEXT, is_default BOOLEAN` |
+| `works` | Thêm `work_code VARCHAR(50) UNIQUE` |
+| `audit_logs` | Giữ hoặc đơn giản hóa (không còn PII audit requirement nặng) |
+| `bp_status enum` | Bỏ `CLOSED`, giữ `REQUESTED / REJECTED / PUBLISHED` |
 
-**API endpoints (đầy đủ):**
-- `/api/auth/**` — login/logout/refresh
-- `/api/library/**` — view list, view detail, like, filter/sort
-- `/api/my-practice/**` — CRUD BP của creator
-- `/api/manage-bp/**` — review, close (Supporter/Admin)
-- `/api/master-data/jobs`, `/work-categories`, `/works`, `/ai-capabilities`
-- `/api/users/**` — user management
-- `/api/dashboard/**` — monitoring data
-- `/api/ai-insight` — classification info
-- `/api/files/upload` — file upload → Docker volume
+**API changes:**
+- `POST /api/files/upload` → nhận `MultipartFile`, lưu vào Docker volume, trả về `filePath`
+- Thêm group `/api/master-data/jobs`, `/api/master-data/work-categories`, `/api/master-data/works`, `/api/master-data/ai-capabilities`
+- Thêm `/api/dashboard/**`
+- Thêm `/api/ai-insight`
+- Bỏ MinIO presigned URL endpoints
 
-**Edit BP state logic:** FR-MY-02 3-case rules viết rõ ràng, không reference tới doc khác
+**Edit BP state logic:** cập nhật theo FR-MY-02 §2.1.1
 
 ---
 
