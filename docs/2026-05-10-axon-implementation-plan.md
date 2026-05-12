@@ -1,8 +1,8 @@
-# AXon — Implementation Plan v2.0
+# AXon — Implementation Plan v2.1
 
-**Version:** 2.0
+**Version:** 2.1
 **Date:** 2026-05-12
-**Dựa trên:** requirements v2.0, HLD v2.0, DLD v2.0
+**Dựa trên:** requirements v2.1, HLD v2.1, DLD v2.1
 
 ---
 
@@ -511,14 +511,14 @@ export default function () {
 
 ---
 
-## P11 — Auth thật (Samsung CIP/AD SSO)
+## P11 — Auth thật + Security NFRs (Samsung CIP/AD SSO + Encryption + Audit + Masking)
 
-**Mục tiêu:** Login thật qua Samsung CIP/AD OAuth 2.0/SSO; department tự động map từ CIP/AD profile.
+**Mục tiêu:** Login thật qua Samsung CIP/AD OAuth 2.0/SSO + bật toàn bộ Security NFRs (MFA admin, PII encryption, audit log, PII masking, TLS enforce). Phase này tách biệt khỏi P0–P10 (nghiệp vụ) theo D3 trong spec.
 
 ### P11-BE-01: CIPADProvider implementation
 
 - Implement `SSOProvider` interface:
-  - `exchange(code)` → call CIP/AD token endpoint → parse user info (name, email, department, cipId)
+  - `exchange(code)` → call CIP/AD token endpoint → parse user info (name, email, department, cipId, amr claim)
 - Cấu hình: `spring.security.oauth2.client.*` trong `application-prod.yml`
 - Inject bằng Spring profile: `dev` → MockSSOProvider; `prod` → CIPADProvider
 
@@ -533,14 +533,62 @@ export default function () {
 - Access token TTL: 30m (thay vì 15m cho dev)
 - FE auto-refresh trước khi hết hạn hoặc logout
 
+### P11-BE-04: MFA enforcement cho ADMIN
+
+- Trong `AuthService` callback: nếu user role là `ADMIN`, kiểm tra `amr` claim từ CIP/AD chứa `mfa` (hoặc `mfa-otp`, `hwk`)
+- Nếu không có → reject session, trả về 403 `MFA_REQUIRED`
+- USER/AX_CREATOR/AX_SUPPORTER không yêu cầu MFA
+
+### P11-BE-05: PII encryption at rest
+
+- Implement `AesGcmStringConverter` (JPA `@Converter`) dùng AES-256-GCM
+- Key đọc từ env var `PII_ENCRYPTION_KEY` (32 bytes base64; production từ vault)
+- Apply `@Convert(converter = AesGcmStringConverter.class)` lên các field PII:
+  - `User.email`
+  - `User.cipId`
+  - `User.department`
+- Migration: re-encrypt existing rows nếu có (P11 dev DB rỗng → no-op)
+
+### P11-BE-06: PII audit log
+
+- Tạo `AuditLog` entity tương ứng schema V11 (đã có trong DLD §1.2)
+- AOP `@Aspect` interceptor: log VIEW_PII/EDIT_PII/DELETE_PII cho các method trong:
+  - `UserService.findById`, `findByEmail` → VIEW_PII
+  - `AdminUserController.updateRole` → EDIT_PII
+  - bất kỳ method trả về `User` hoặc `UserResponse`
+- Async ghi vào `audit_logs` (qua `@Async` để không block request)
+- Scheduled job `AuditCleanupJob` (Spring `@Scheduled(cron = "0 0 2 * * *")`) — xoá row có `occurred_at < NOW() - 30d`
+
+### P11-BE-07: PII masking trong logs & error responses
+
+- **Logback config:** thêm `MaskingPatternLayout` áp dụng regex masking trên log messages:
+  - Email: `(\w)\w*@(\w+\.\w+)` → `$1***@$2`
+  - CIP ID: full string → `***`
+  - JWT tokens: pattern `Bearer eyJ\S+` → `Bearer ***`
+- **GlobalExceptionHandler:** sanitize PII trong error response (không trả full email, không trả raw CIP ID)
+- Test bằng unit test: log statement có email → assert masked output không chứa full email
+
+### P11-NFR-01: TLS 1.2+ enforce ở ingress
+
+- Cấu hình Nginx Ingress hoặc K8s Ingress với `ssl_protocols TLSv1.2 TLSv1.3`
+- Disable TLS 1.0/1.1
+- Backend container nhận traffic HTTP nội bộ (TLS terminated ở ingress)
+- Document trong `infra/ingress.yaml`
+
 ### P11-FE-01: Real login flow
 
 - `/login` → `POST /auth/login` → backend redirect CIP/AD
 - `/auth/callback` → nhận JWT → store in authStore → redirect `/library`
+- Handle 403 `MFA_REQUIRED` error cho ADMIN role: hiển thị "MFA required, please complete in CIP/AD"
 
-**Test:** Integration test với MockSSOProvider vẫn pass sau khi thêm CIPADProvider (profile separation).
+**Tests:**
+- Integration test với MockSSOProvider vẫn pass sau khi thêm CIPADProvider (profile separation)
+- Unit test `AesGcmStringConverter`: encrypt/decrypt round-trip
+- Integration test: ADMIN login không có `amr=mfa` → 403; có → 200
+- Unit test logback masking: log "user@samsung.com" → log file chứa "u***@samsung.com"
+- Integration test audit log: GET /admin/users/:id → audit_logs có row VIEW_PII
 
-**Commit:** `feat: SSO CIP/AD integration — OAuth 2.0 login, department mapping, 30m timeout`
+**Commit:** `feat(p11): SSO CIP/AD + MFA admin + PII encryption + audit log + PII masking + TLS enforce`
 
 ---
 
