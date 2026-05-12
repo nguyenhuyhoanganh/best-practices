@@ -1,6 +1,6 @@
-# AXon — Requirements v2.0
+# AXon — Requirements v2.1
 
-**Version:** 2.0
+**Version:** 2.1
 **Date:** 2026-05-12
 **Status:** Approved
 
@@ -296,10 +296,30 @@ AXon (AI eXchange on) là nền tảng chia sẻ và quản lý AI Best Practice
 - Đo bằng JMeter / k6
 
 ### 6.2 Security
-- **Authentication:** Samsung CIP/AD OAuth 2.0/SSO (triển khai P11); dev dùng mock user
-- **Authorization:** RBAC — mỗi role chỉ truy cập resource được phân quyền
-- **OWASP Top 10 cơ bản:** parameterized queries (SQL injection), sanitize input (XSS), CSRF token
-- **Session timeout:** 30 phút
+
+> **Phạm vi:** Documentation đầy đủ. Implementation chỉ ở P11 — tách biệt khỏi nghiệp vụ để ưu tiên P0–P10. P0–P10 dùng mock auth, không xử lý PII thật.
+
+**Authentication & SSO:**
+- Samsung CIP/AD OAuth 2.0/SSO (triển khai P11); dev dùng MockSSOProvider với 4 hardcoded users
+- Session timeout: 30 phút (access token TTL 30m ở P11)
+- **MFA bắt buộc cho ADMIN role** (delegate cho CIP/AD MFA flow; backend reject ADMIN session không có MFA claim)
+
+**Authorization:**
+- RBAC — mỗi role chỉ truy cập resource được phân quyền
+- 4 roles: USER, AX_CREATOR, AX_SUPPORTER, ADMIN
+
+**Data Protection (P11):**
+- **Encryption at rest:** AES-256 cho PII binary data (email, CIP ID, department mã hoá ở DB layer qua JPA entity converters)
+- **Encryption in transit:** TLS 1.2+ cho mọi HTTPS connection (enforce ở ingress/reverse proxy)
+
+**OWASP Top 10 (cơ bản, áp dụng từ P0):**
+- SQL Injection: parameterized queries qua JPA / Spring Data
+- XSS: input sanitization + React JSX auto-escape
+- CSRF: CSRF token cho state-changing requests
+
+**Audit & Logging (P11):**
+- **PII audit log:** ghi log mọi thao tác trên PII (view/edit/delete user data); retention 1 tháng; scheduled job xoá row > 30d
+- **PII masking:** ẩn PII trong application logs và error messages (email partial `n***@samsung.com`, không log full name hoặc CIP ID raw)
 
 ### 6.3 Internationalization
 - Hỗ trợ tiếng Anh (EN) và tiếng Việt (VI)
