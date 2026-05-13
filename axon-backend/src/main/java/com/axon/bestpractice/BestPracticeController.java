@@ -1,5 +1,7 @@
 package com.axon.bestpractice;
 
+import com.axon.analytics.AnalyticsService;
+import com.axon.analytics.dto.AnalyticsResponse;
 import com.axon.bestpractice.dto.BestPracticeDetailDto;
 import com.axon.bestpractice.dto.BestPracticeListItemDto;
 import com.axon.bestpractice.dto.BestPracticeRequest;
@@ -45,6 +47,7 @@ public class BestPracticeController {
     private final BestPracticeService bestPracticeService;
     private final FileService fileService;
     private final FeedbackService feedbackService;
+    private final AnalyticsService analyticsService;
 
     private UUID currentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -170,6 +173,13 @@ public class BestPracticeController {
             @RequestBody FeedbackRequest req) {
         BpFeedback fb = feedbackService.create(id, req.content(), currentUserId());
         return ResponseEntity.status(201).body(feedbackService.toDto(fb));
+    }
+
+    // GET /api/v1/best-practices/{id}/analytics
+    @GetMapping("/{id}/analytics")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<AnalyticsResponse> getAnalytics(@PathVariable UUID id) {
+        return ResponseEntity.ok(analyticsService.getAnalytics(id));
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
