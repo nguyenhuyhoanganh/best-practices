@@ -1,3 +1,4 @@
+import axios from 'axios';
 import client from './client';
 import type {
   BestPractice,
@@ -14,90 +15,134 @@ import type {
   WorkCategory,
   Work,
   User,
-  TokenResponse,
 } from '../types';
 
-// Auth
+// Separate instance for /auth/* endpoints (not under /api prefix)
+const authClient = axios.create({ withCredentials: true });
+
+// Auth — calls /auth/* (proxied by Vite to BE directly, no /api prefix)
 export const authApi = {
-  refresh: () => client.post<{ access_token: string }>('/auth/refresh'),
-  logout: () => client.post('/auth/logout'),
-  me: () => client.get<User>('/auth/me'),
+  refresh: () => authClient.post<{ access_token: string }>('/auth/refresh'),
+  logout: () => authClient.post('/auth/logout'),
+  me: () => authClient.get<User>('/auth/me'),
 };
 
-// Best Practices
+// Best Practices — under /api/v1/
 export const bpApi = {
   list: (params?: Record<string, unknown>) =>
-    client.get<PagedResponse<BestPracticeListItem>>('/best-practices', { params }),
-  get: (id: string) => client.get<BestPractice>(`/best-practices/${id}`),
-  create: (data: BestPracticeRequest) => client.post<BestPractice>('/best-practices', data),
+    client.get<PagedResponse<BestPracticeListItem>>('/v1/best-practices', { params }),
+  get: (id: string) => client.get<BestPractice>(`/v1/best-practices/${id}`),
+  create: (data: BestPracticeRequest) => client.post<BestPractice>('/v1/best-practices', data),
   update: (id: string, data: Partial<BestPracticeRequest>) =>
-    client.put<BestPractice>(`/best-practices/${id}`, data),
-  delete: (id: string) => client.delete(`/best-practices/${id}`),
-  like: (id: string) => client.post(`/best-practices/${id}/like`),
-  unlike: (id: string) => client.delete(`/best-practices/${id}/like`),
+    client.put<BestPractice>(`/v1/best-practices/${id}`, data),
+  delete: (id: string) => client.delete(`/v1/best-practices/${id}`),
+  like: (id: string) => client.post(`/v1/best-practices/${id}/like`),
+  unlike: (id: string) => client.delete(`/v1/best-practices/${id}/like`),
   download: (id: string, fileId: string) =>
-    client.get(`/best-practices/${id}/files/${fileId}`, { responseType: 'blob' }),
+    client.get(`/v1/best-practices/${id}/files/${fileId}`, { responseType: 'blob' }),
   uploadFile: (id: string, formData: FormData) =>
-    client.post(`/best-practices/${id}/files`, formData),
+    client.post(`/v1/best-practices/${id}/files`, formData),
   deleteFile: (id: string, fileId: string) =>
-    client.delete(`/best-practices/${id}/files/${fileId}`),
+    client.delete(`/v1/best-practices/${id}/files/${fileId}`),
 };
 
 // Feedback
 export const feedbackApi = {
-  list: (bpId: string) => client.get<Feedback[]>(`/best-practices/${bpId}/feedback`),
+  list: (bpId: string) => client.get<Feedback[]>(`/v1/best-practices/${bpId}/feedback`),
   create: (bpId: string, content: string) =>
-    client.post<Feedback>(`/best-practices/${bpId}/feedback`, { content }),
+    client.post<Feedback>(`/v1/best-practices/${bpId}/feedback`, { content }),
   delete: (bpId: string, feedbackId: string) =>
-    client.delete(`/best-practices/${bpId}/feedback/${feedbackId}`),
+    client.delete(`/v1/best-practices/${bpId}/feedback/${feedbackId}`),
 };
 
 // Analytics
 export const analyticsApi = {
-  get: (bpId: string) => client.get<Analytics>(`/best-practices/${bpId}/analytics`),
+  get: (bpId: string) => client.get<Analytics>(`/v1/best-practices/${bpId}/analytics`),
 };
 
 // Management (reviewer actions)
 export const managementApi = {
   queue: (params?: Record<string, unknown>) =>
-    client.get<PagedResponse<BestPracticeListItem>>('/management/queue', { params }),
+    client.get<PagedResponse<BestPracticeListItem>>('/v1/management/queue', { params }),
   review: (bpId: string, data: { action: BpReview['action']; comment?: string }) =>
-    client.post<BpReview>(`/management/best-practices/${bpId}/review`, data),
+    client.post<BpReview>(`/v1/management/best-practices/${bpId}/review`, data),
   close: (bpId: string, reason: string) =>
-    client.post(`/management/best-practices/${bpId}/close`, { reason }),
+    client.post(`/v1/management/best-practices/${bpId}/close`, { reason }),
 };
 
 // Dashboard
 export const dashboardApi = {
-  stats: () => client.get<DashboardStats>('/dashboard/stats'),
+  stats: () => client.get<DashboardStats>('/v1/dashboard/stats'),
 };
 
 // AI Insight
 export const aiInsightApi = {
   classify: (bpId: string) =>
-    client.get<AiInsightClassification>(`/ai-insight/best-practices/${bpId}/classification`),
+    client.get<AiInsightClassification>(`/v1/ai-insight/best-practices/${bpId}/classification`),
 };
 
-// Lookup / Master data
+// Lookup / Reference data (public)
 export const lookupApi = {
-  jobs: () => client.get<Job[]>('/lookup/jobs'),
-  aiCapabilities: () => client.get<AiCapability[]>('/lookup/ai-capabilities'),
-  workCategories: () => client.get<WorkCategory[]>('/lookup/work-categories'),
-  works: (categoryId?: string) =>
-    client.get<Work[]>('/lookup/works', { params: categoryId ? { category_id: categoryId } : undefined }),
+  jobs: () => client.get<Job[]>('/v1/jobs'),
+  aiCapabilities: () => client.get<AiCapability[]>('/v1/ai-capabilities'),
+  workCategories: () => client.get<WorkCategory[]>('/v1/work-categories'),
+  works: (workCategoryId?: string) =>
+    client.get<Work[]>('/v1/works', {
+      params: workCategoryId ? { workCategoryId } : undefined,
+    }),
+};
+
+// Master data admin CRUD
+export const masterDataApi = {
+  jobs: {
+    list: () => client.get<Job[]>('/v1/admin/master-data/jobs'),
+    create: (data: { name: string; description?: string }) =>
+      client.post<Job>('/v1/admin/master-data/jobs', data),
+    update: (id: string, data: { name: string; description?: string }) =>
+      client.put<Job>(`/v1/admin/master-data/jobs/${id}`, data),
+    delete: (id: string) => client.delete(`/v1/admin/master-data/jobs/${id}`),
+  },
+  workCategories: {
+    list: (jobId?: string) =>
+      client.get('/v1/admin/master-data/work-categories', {
+        params: jobId ? { jobId } : undefined,
+      }),
+    create: (data: { job_id: string; name: string; description?: string }) =>
+      client.post('/v1/admin/master-data/work-categories', data),
+    update: (id: string, data: { name: string; description?: string }) =>
+      client.put(`/v1/admin/master-data/work-categories/${id}`, data),
+    delete: (id: string) => client.delete(`/v1/admin/master-data/work-categories/${id}`),
+  },
+  works: {
+    list: (workCategoryId?: string) =>
+      client.get('/v1/admin/master-data/works', {
+        params: workCategoryId ? { workCategoryId } : undefined,
+      }),
+    create: (data: {
+      job_id: string;
+      work_category_id: string;
+      name: string;
+      code: string;
+      description?: string;
+    }) => client.post('/v1/admin/master-data/works', data),
+    update: (id: string, data: { name: string; code: string; description?: string }) =>
+      client.put(`/v1/admin/master-data/works/${id}`, data),
+    delete: (id: string) => client.delete(`/v1/admin/master-data/works/${id}`),
+  },
+  aiCapabilities: {
+    list: () => client.get<AiCapability[]>('/v1/admin/master-data/ai-capabilities'),
+    create: (data: { name: string; is_default?: boolean }) =>
+      client.post<AiCapability>('/v1/admin/master-data/ai-capabilities', data),
+    update: (id: string, data: { name: string }) =>
+      client.put<AiCapability>(`/v1/admin/master-data/ai-capabilities/${id}`, data),
+    delete: (id: string) => client.delete(`/v1/admin/master-data/ai-capabilities/${id}`),
+  },
 };
 
 // Admin — user management
 export const userApi = {
   list: (params?: Record<string, unknown>) =>
-    client.get<PagedResponse<User>>('/admin/users', { params }),
+    client.get<PagedResponse<User>>('/v1/admin/users', { params }),
   updateRole: (userId: string, role: User['role']) =>
-    client.put(`/admin/users/${userId}/role`, { role }),
-};
-
-// Token response helper (used after SSO callback)
-export const handleAuthCallback = (data: TokenResponse) => {
-  import('../store/authStore').then(({ useAuthStore }) => {
-    useAuthStore.getState().login(data.access_token, data.user);
-  });
+    client.put(`/v1/admin/users/${userId}/role`, { role }),
 };

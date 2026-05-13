@@ -21,7 +21,7 @@ client.interceptors.response.use(
     original._retry = true;
     if (!refreshing) {
       refreshing = axios
-        .post<{ access_token: string }>('/auth/refresh', {}, { withCredentials: true })
+        .post<{ access_token: string }>('/auth/refresh', null, { withCredentials: true })
         .then((r) => r.data.access_token)
         .finally(() => { refreshing = null; });
     }
