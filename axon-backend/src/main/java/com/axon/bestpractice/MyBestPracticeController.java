@@ -1,6 +1,8 @@
 package com.axon.bestpractice;
 
 import com.axon.bestpractice.dto.BestPracticeListItemDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 import java.util.UUID;
 
+@Tag(name = "My Best Practices", description = "Creator's own BP list with status filter (AX_CREATOR only)")
 @RestController
 @RequestMapping("/api/v1/my-best-practices")
 @RequiredArgsConstructor
@@ -29,6 +32,7 @@ public class MyBestPracticeController {
         return UUID.fromString((String) auth.getPrincipal());
     }
 
+    @Operation(summary = "List my best practices", description = "Returns paginated list of BPs where the current user is a creator. Optional status filter.")
     @GetMapping
     public ResponseEntity<Map<String, Object>> list(
             @RequestParam(required = false) BpStatus status,

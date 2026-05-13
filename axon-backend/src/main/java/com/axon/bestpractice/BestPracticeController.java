@@ -14,6 +14,10 @@ import com.axon.interaction.dto.FeedbackRequest;
 import com.axon.interaction.dto.FeedbackResponse;
 import com.axon.interaction.dto.LikeResult;
 import com.axon.user.UserRole;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -39,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Tag(name = "Best Practices", description = "CRUD, files, feedback, likes, analytics for best practices")
 @RestController
 @RequestMapping("/api/v1/best-practices")
 @RequiredArgsConstructor
@@ -66,6 +71,8 @@ public class BestPracticeController {
                 .orElse(UserRole.USER);
     }
 
+    @Operation(summary = "List published best practices", description = "Public endpoint. Supports pagination and sorting.")
+    @ApiResponse(responseCode = "200", description = "Paginated list of published BPs")
     @GetMapping
     public ResponseEntity<Map<String, Object>> list(
             @RequestParam(defaultValue = "0") int page,
@@ -85,6 +92,9 @@ public class BestPracticeController {
         ));
     }
 
+    @Operation(summary = "Get best practice by ID", description = "Public endpoint. key_value masked for USER role unless they are a creator.")
+    @ApiResponse(responseCode = "200", description = "Best practice detail")
+    @ApiResponse(responseCode = "404", description = "Not found")
     @GetMapping("/{id}")
     public ResponseEntity<BestPracticeDetailDto> getById(@PathVariable UUID id) {
         BestPractice bp = bestPracticeService.findById(id);
@@ -94,6 +104,9 @@ public class BestPracticeController {
         return ResponseEntity.ok(bestPracticeService.toDetailDto(bp, userId, role != null ? role : UserRole.USER));
     }
 
+    @Operation(summary = "Create best practice", description = "Requires AX_CREATOR role. Status set to REQUESTED. Creator auto-assigned if first submission.")
+    @ApiResponse(responseCode = "201", description = "BP created and in review queue")
+    @ApiResponse(responseCode = "403", description = "Insufficient role")
     @PostMapping
     @PreAuthorize("hasRole('AX_CREATOR')")
     public ResponseEntity<BestPracticeDetailDto> create(@RequestBody BestPracticeRequest req) {
@@ -102,6 +115,9 @@ public class BestPracticeController {
         return ResponseEntity.status(201).body(bestPracticeService.toDetailDto(bp, userId, currentRole()));
     }
 
+    @Operation(summary = "Update best practice", description = "Only creator or ADMIN. If PUBLISHED and web_content changes, status resets to REQUESTED.")
+    @ApiResponse(responseCode = "200", description = "Updated BP")
+    @ApiResponse(responseCode = "403", description = "Not a creator or admin")
     @PutMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<BestPracticeDetailDto> update(@PathVariable UUID id, @RequestBody BestPracticeRequest req) {
@@ -116,12 +132,15 @@ public class BestPracticeController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Toggle like", description = "Like if not liked, unlike if already liked. Returns new like state.")
     @PostMapping("/{id}/like")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<LikeResult> toggleLike(@PathVariable UUID id) {
         return ResponseEntity.ok(bestPracticeService.toggleLike(id, currentUserId()));
     }
 
+    @Operation(summary = "Upload file to best practice", description = "Multipart upload. Stored as UUID-prefixed filename under /app/uploads/{bpId}/. Max 50MB.")
+    @ApiResponse(responseCode = "201", description = "File uploaded")
     @PostMapping("/{id}/files")
     @PreAuthorize("hasRole('AX_CREATOR')")
     public ResponseEntity<FileResponse> uploadFile(
@@ -131,6 +150,8 @@ public class BestPracticeController {
         return ResponseEntity.status(201).body(FileResponse.from(bpFile));
     }
 
+    @Operation(summary = "Download file", description = "Returns file as attachment. Increments download count asynchronously.")
+    @ApiResponse(responseCode = "200", description = "File content as attachment")
     @GetMapping("/{id}/files/{fileId}/download")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Resource> downloadFile(@PathVariable UUID id, @PathVariable UUID fileId) {
@@ -176,6 +197,7 @@ public class BestPracticeController {
     }
 
     // GET /api/v1/best-practices/{id}/analytics
+    @Operation(summary = "Get BP analytics", description = "Per-BP analytics: view/download/like counts, weekly download breakdown, recent feedback.")
     @GetMapping("/{id}/analytics")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<AnalyticsResponse> getAnalytics(@PathVariable UUID id) {

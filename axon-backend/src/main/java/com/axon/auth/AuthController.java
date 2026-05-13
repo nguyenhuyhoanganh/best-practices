@@ -7,6 +7,10 @@ import com.axon.auth.jwt.JwtService;
 import com.axon.user.User;
 import com.axon.user.UserService;
 import io.jsonwebtoken.Claims;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.util.UUID;
 
-// P1: POST /auth/login, GET /auth/callback, POST /auth/refresh, POST /auth/logout, GET /auth/me
+@Tag(name = "Authentication", description = "Samsung SSO OAuth2 flow: login → callback → refresh → logout")
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -36,6 +40,8 @@ public class AuthController {
     private final UserService userService;
     private final JwtService jwtService;
 
+    @Operation(summary = "Initiate Samsung SSO login", description = "Redirects to Samsung CIP login page (dev: redirects to /auth/callback with mock code)")
+    @SecurityRequirements
     @RequestMapping(value = "/login", method = {
         org.springframework.web.bind.annotation.RequestMethod.GET,
         org.springframework.web.bind.annotation.RequestMethod.POST
@@ -44,6 +50,9 @@ public class AuthController {
         response.sendRedirect("/auth/callback?code=mock-code-dev&state=dev");
     }
 
+    @Operation(summary = "OAuth2 callback", description = "Exchanges authorization code for tokens. Sets refresh_token as HttpOnly cookie. Returns access_token in body.")
+    @ApiResponse(responseCode = "200", description = "Authentication successful")
+    @SecurityRequirements
     @GetMapping("/callback")
     public ResponseEntity<TokenResponse> callback(
         @RequestParam("code") String code,
@@ -65,6 +74,10 @@ public class AuthController {
         return ResponseEntity.ok(new TokenResponse(accessToken, 900L, UserDto.from(user)));
     }
 
+    @Operation(summary = "Refresh access token", description = "Uses the refresh_token HttpOnly cookie to issue a new access token. No Authorization header needed.")
+    @ApiResponse(responseCode = "200", description = "New access token issued")
+    @ApiResponse(responseCode = "401", description = "Refresh token invalid or expired")
+    @SecurityRequirements
     @PostMapping("/refresh")
     public ResponseEntity<RefreshResponse> refresh(
         @CookieValue("refresh_token") String refreshToken
@@ -81,6 +94,8 @@ public class AuthController {
         return ResponseEntity.ok(new RefreshResponse(newAccessToken, 900L));
     }
 
+    @Operation(summary = "Logout", description = "Clears the refresh_token HttpOnly cookie")
+    @SecurityRequirements
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletResponse response) {
         ResponseCookie clearCookie = ResponseCookie.from("refresh_token", "")
@@ -94,6 +109,9 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Get current user", description = "Returns the authenticated user's profile and role")
+    @ApiResponse(responseCode = "200", description = "User profile")
+    @ApiResponse(responseCode = "401", description = "Not authenticated")
     @GetMapping("/me")
     public ResponseEntity<UserDto> me() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

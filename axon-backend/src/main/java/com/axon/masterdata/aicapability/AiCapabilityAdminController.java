@@ -2,6 +2,7 @@ package com.axon.masterdata.aicapability;
 
 import com.axon.lookup.aicapability.dto.AiCapabilityDto;
 import com.axon.masterdata.aicapability.dto.AiCapabilityRequest;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Tag(name = "Admin - Master Data")
 @RestController
 @RequestMapping("/api/v1/admin/master-data/ai-capabilities")
 @PreAuthorize("hasRole('ADMIN')")

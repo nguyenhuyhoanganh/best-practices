@@ -2,6 +2,8 @@ package com.axon.masterdata.job;
 
 import com.axon.lookup.job.dto.JobDto;
 import com.axon.masterdata.job.dto.JobRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Tag(name = "Admin - Master Data", description = "ADMIN-only CRUD for Jobs, Work Categories, Works, AI Capabilities (soft delete with is_active)")
 @RestController
 @RequestMapping("/api/v1/admin/master-data/jobs")
 @PreAuthorize("hasRole('ADMIN')")
@@ -28,6 +31,7 @@ public class JobAdminController {
 
     private final JobAdminService jobAdminService;
 
+    @Operation(summary = "List all jobs (including inactive)")
     @GetMapping
     public ResponseEntity<List<JobDto>> getJobs() {
         List<JobDto> jobs = jobAdminService.findAll()
@@ -37,17 +41,20 @@ public class JobAdminController {
         return ResponseEntity.ok(jobs);
     }
 
+    @Operation(summary = "Create job")
     @PostMapping
     public ResponseEntity<JobDto> createJob(@RequestBody JobRequest req) {
         JobDto created = JobDto.from(jobAdminService.create(req));
         return ResponseEntity.created(URI.create("/api/v1/admin/master-data/jobs/" + created.id())).body(created);
     }
 
+    @Operation(summary = "Update job")
     @PutMapping("/{id}")
     public ResponseEntity<JobDto> updateJob(@PathVariable UUID id, @RequestBody JobRequest req) {
         return ResponseEntity.ok(JobDto.from(jobAdminService.update(id, req)));
     }
 
+    @Operation(summary = "Soft-delete job", description = "Sets is_active=false. Job disappears from public lookup but data is preserved.")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteJob(@PathVariable UUID id) {
         jobAdminService.delete(id);

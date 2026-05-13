@@ -12,6 +12,9 @@ import com.axon.management.dto.ReviewRequest;
 import com.axon.management.dto.ReviewResponse;
 import com.axon.user.UserRole;
 import com.axon.user.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Tag(name = "Management", description = "Review queue for AX_SUPPORTER and ADMIN: approve, reject, close best practices")
 @RestController
 @RequestMapping("/api/v1/management")
 @RequiredArgsConstructor
@@ -46,6 +50,7 @@ public class ManagementController {
         return UUID.fromString((String) auth.getPrincipal());
     }
 
+    @Operation(summary = "List all BPs in management queue", description = "Filter by status (REQUESTED/PUBLISHED/REJECTED) and free-text search")
     @GetMapping("/best-practices")
     public ResponseEntity<Map<String, Object>> list(
             @RequestParam(required = false) BpStatus status,
@@ -71,6 +76,9 @@ public class ManagementController {
         return ResponseEntity.ok(bestPracticeService.toDetailDto(bp, userId, UserRole.AX_SUPPORTER));
     }
 
+    @Operation(summary = "Approve best practice", description = "Sets status to PUBLISHED. Reviewer cannot approve their own submission.")
+    @ApiResponse(responseCode = "200", description = "BP approved and published")
+    @ApiResponse(responseCode = "403", description = "Self-approval not allowed")
     @PutMapping("/best-practices/{id}/approve")
     public ResponseEntity<BestPracticeDetailDto> approve(@PathVariable UUID id) {
         UUID userId = currentUserId();
@@ -78,6 +86,7 @@ public class ManagementController {
         return ResponseEntity.ok(bestPracticeService.toDetailDto(bp, userId, UserRole.AX_SUPPORTER));
     }
 
+    @Operation(summary = "Reject best practice", description = "Sets status to REJECTED. Requires a rejection comment.")
     @PutMapping("/best-practices/{id}/reject")
     public ResponseEntity<BestPracticeDetailDto> reject(@PathVariable UUID id, @RequestBody ReviewRequest req) {
         UUID userId = currentUserId();
@@ -85,6 +94,7 @@ public class ManagementController {
         return ResponseEntity.ok(bestPracticeService.toDetailDto(bp, userId, UserRole.AX_SUPPORTER));
     }
 
+    @Operation(summary = "Close best practice", description = "Sets status to REJECTED and records close_reason. Used for administrative closure.")
     @PutMapping("/best-practices/{id}/close")
     public ResponseEntity<BestPracticeDetailDto> close(@PathVariable UUID id, @RequestBody CloseRequest req) {
         UUID userId = currentUserId();

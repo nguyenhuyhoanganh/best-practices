@@ -2,6 +2,7 @@ package com.axon.masterdata.workcategory;
 
 import com.axon.masterdata.workcategory.dto.WorkCategoryAdminDto;
 import com.axon.masterdata.workcategory.dto.WorkCategoryRequest;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Tag(name = "Admin - Master Data")
 @RestController
 @RequestMapping("/api/v1/admin/master-data/work-categories")
 @PreAuthorize("hasRole('ADMIN')")
